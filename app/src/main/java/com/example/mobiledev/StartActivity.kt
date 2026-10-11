@@ -1,6 +1,5 @@
 package com.example.mobiledev
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -35,19 +34,17 @@ class StartActivity : AppCompatActivity() {
 
         resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
         { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
+            if (result.resultCode == RESULT_OK) {
                 val data : Intent? = result.data
                 useResult(data)
             }
         }
 
-        val btnRegistration : Button = findViewById(R.id.btn_to_register)
-        btnRegistration.setOnClickListener {
+        findViewById<Button>(R.id.btn_to_register).setOnClickListener {
             openRegistration()
         }
 
-        val btnContent : Button = findViewById(R.id.btn_to_content)
-        btnContent.setOnClickListener {
+        findViewById<Button>(R.id.btn_to_content).setOnClickListener {
             openContent()
         }
     }

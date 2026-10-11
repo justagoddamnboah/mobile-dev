@@ -29,19 +29,13 @@ class RegistrationActivity : AppCompatActivity() {
         username = findViewById(R.id.username)
         password = findViewById(R.id.password)
 
-        val btnToStart : Button = findViewById(R.id.btn_to_start)
-        btnToStart.setOnClickListener {
+        findViewById<Button>(R.id.btn_to_start).setOnClickListener {
             registerProcess()
         }
 
-        val btnBack : Button = findViewById(R.id.btn_back)
-        btnBack.setOnClickListener {
-            dropActivity()
+        findViewById<Button>(R.id.btn_back).setOnClickListener {
+            finish()
         }
-    }
-
-    private fun dropActivity() {
-        finish()
     }
 
     private fun registerProcess() {
