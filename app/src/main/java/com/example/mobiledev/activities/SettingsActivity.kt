@@ -91,8 +91,11 @@ class SettingsActivity : BaseActivity() {
         spinnerPalette.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
                 val newPaletteKey = PaletteManager.getPaletteKeyByPosition(pos)
-                if (newPaletteKey != currentPalette) {
+                val actualCurrentPalette = PaletteManager.getPalette(this@SettingsActivity)
+
+                if (newPaletteKey != actualCurrentPalette) {
                     PaletteManager.setPalette(this@SettingsActivity, newPaletteKey)
+                    recreate()
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -125,9 +128,14 @@ class SettingsActivity : BaseActivity() {
 
     private fun updateBackupUI() {
         val hasBackup = BackupManager.hasBackup(this)
-
-        btnRestoreBackup.isEnabled = hasBackup
-        btnDeleteBackup.isEnabled = hasBackup
+        btnRestoreBackup.apply {
+            visibility = if (hasBackup) View.VISIBLE else View.GONE
+            isEnabled = hasBackup
+        }
+        btnDeleteBackup.apply {
+            visibility = if (hasBackup) View.VISIBLE else View.GONE
+            isEnabled = hasBackup
+        }
 
         tvBackupStatus.apply {
             text = if (hasBackup) "Резервная копия найдена" else "Резервная копия не найдена"

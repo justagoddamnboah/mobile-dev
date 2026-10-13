@@ -7,36 +7,37 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.R
 
 class StartActivity : BaseActivity() {
     companion object {
-        const val USERNAME : String = "USERNAME"
-        const val PASSWORD : String = "PASSWORD"
+        const val USERNAME: String = "USERNAME"
+        const val PASSWORD: String = "PASSWORD"
     }
 
-    private var currentUsername : String? = null
-    lateinit var resultLauncher : ActivityResultLauncher<Intent>
+    private var currentUsername: String? = null
+    lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
-    override fun onCreate(savedInstanceState : Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         setContentView(R.layout.activity_start)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.start))
-        { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.start)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
-        { result ->
+        if (savedInstanceState != null) {
+            currentUsername = savedInstanceState.getString(USERNAME)
+            updateGreeting()
+        }
+
+        resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                val data : Intent? = result.data
+                val data: Intent? = result.data
                 useResult(data)
             }
         }
@@ -44,10 +45,14 @@ class StartActivity : BaseActivity() {
         findViewById<Button>(R.id.btn_to_register).setOnClickListener {
             openRegistration()
         }
-
         findViewById<Button>(R.id.btn_to_content).setOnClickListener {
             openContent()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(USERNAME, currentUsername)
     }
 
     private fun openRegistration() {
@@ -61,13 +66,19 @@ class StartActivity : BaseActivity() {
         startActivity(intent)
     }
 
-    private fun useResult(data : Intent?) {
-        var txt = ""
+    private fun useResult(data: Intent?) {
         if (data != null && data.hasExtra(USERNAME)) {
             currentUsername = data.getStringExtra(USERNAME)
-            txt = "Привет, ${currentUsername}!"
+            updateGreeting()
         }
-        val greeting : TextView = findViewById(R.id.pony_quote)
-        greeting.text = txt
+    }
+
+    private fun updateGreeting() {
+        val greeting: TextView = findViewById(R.id.pony_quote)
+        if (currentUsername != null) {
+            greeting.text = "Привет, $currentUsername!"
+        } else {
+            greeting.text = "Добро пожаловать в Эквестрию! Здесь ты можешь познакомиться со всеми жителями!"
+        }
     }
 }
