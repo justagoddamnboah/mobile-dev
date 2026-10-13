@@ -3,16 +3,24 @@ package com.example.mobiledev.activities
 import android.os.Bundle
 import android.widget.Button
 import android.widget.Switch
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.R
-import com.example.mobiledev.prefs.ThemeHelper
+import com.example.mobiledev.prefs.BackupManager
+import com.example.mobiledev.prefs.ThemeManager
+import com.google.android.material.snackbar.Snackbar
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : BaseActivity() {
 
     private lateinit var switchTheme: Switch
+    private lateinit var tvBackupStatus: TextView
+    private lateinit var tvBackupHint: TextView
+    private lateinit var btnCreateBackup: Button
+    private lateinit var btnRestoreBackup: Button
+    private lateinit var btnDeleteBackup: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,11 +36,69 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_back_to_content).setOnClickListener { finish() }
 
         switchTheme = findViewById(R.id.switch_dark_theme)
-
-        switchTheme.isChecked = ThemeHelper.getThemeState(this)
-
+        switchTheme.isChecked = ThemeManager.getThemeState(this)
         switchTheme.setOnCheckedChangeListener { _, isChecked ->
-            ThemeHelper.setThemeState(this, isChecked)
+            ThemeManager.setThemeState(this, isChecked)
         }
+
+        tvBackupStatus = findViewById(R.id.tv_backup_status)
+        tvBackupHint = findViewById(R.id.tv_backup_hint)
+        btnCreateBackup = findViewById(R.id.btn_create_backup)
+        btnRestoreBackup = findViewById(R.id.btn_restore_backup)
+        btnDeleteBackup = findViewById(R.id.btn_delete_backup)
+
+        updateBackupUI()
+
+        btnCreateBackup.setOnClickListener {
+            val success = BackupManager.createBackup(this, getDefaultPonies())
+            if (success) {
+                Snackbar.make(findViewById(R.id.settings), "Резервная копия успешно создана", Snackbar.LENGTH_SHORT).show()
+                updateBackupUI()
+            } else {
+                Snackbar.make(findViewById(R.id.settings), "Ошибка при создании копии", Snackbar.LENGTH_SHORT).show()
+            }
+        }
+
+        btnRestoreBackup.setOnClickListener {
+            val restoredPonies = BackupManager.restoreBackup(this)
+            if (restoredPonies != null) {
+                Snackbar.make(findViewById(R.id.settings), "Данные успешно восстановлены!", Snackbar.LENGTH_SHORT).show()
+            } else {
+                Snackbar.make(findViewById(R.id.settings), "Ошибка при восстановлении данных", Snackbar.LENGTH_SHORT).show()
+            }
+        }
+
+        btnDeleteBackup.setOnClickListener {
+            val success = BackupManager.deleteBackup(this)
+            if (success) {
+                Snackbar.make(findViewById(R.id.settings), "Резервная копия удалена", Snackbar.LENGTH_SHORT).show()
+                updateBackupUI()
+            } else {
+                Snackbar.make(findViewById(R.id.settings), "Ошибка при удалении копии", Snackbar.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateBackupUI() {
+        val hasBackup = BackupManager.hasBackup(this)
+
+        btnRestoreBackup.isEnabled = hasBackup
+        btnDeleteBackup.isEnabled = hasBackup
+
+        if (hasBackup) {
+            tvBackupStatus.text = "Резервная копия найдена"
+            tvBackupStatus.setTextColor(getColor(R.color.text_secondary))
+            tvBackupHint.text = "Вы можете восстановить данные или удалить старую копию."
+        } else {
+            tvBackupStatus.text = "Резервная копия не найдена"
+            tvBackupHint.text = "Создайте копию, чтобы сохранить текущий список жителей Эквестрии."
+        }
+    }
+
+    private fun getDefaultPonies(): List<com.example.mobiledev.models.Pony> {
+        return listOf(
+            com.example.mobiledev.models.Pony("Сумеречная Искорка", "Аликорн", "Женский", R.drawable.twilight_sparkle, android.graphics.Color.rgb(230, 210, 255)),
+            com.example.mobiledev.models.Pony("Спайк", "Дракон", "Мужской", R.drawable.spike, android.graphics.Color.rgb(190, 235, 200))
+        )
     }
 }

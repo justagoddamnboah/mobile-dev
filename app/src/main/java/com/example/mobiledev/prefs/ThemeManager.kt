@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
-object ThemeHelper {
+object ThemeManager {
     private const val PREFS_NAME = "ThemePrefs"
     private const val KEY_IS_DARK = "isDarkTheme"
 

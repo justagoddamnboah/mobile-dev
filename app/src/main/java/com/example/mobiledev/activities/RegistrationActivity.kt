@@ -11,7 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.R
 import com.google.android.material.snackbar.Snackbar
 
-class RegistrationActivity : AppCompatActivity() {
+class RegistrationActivity : BaseActivity() {
     lateinit var username : EditText
     lateinit var password : EditText
 

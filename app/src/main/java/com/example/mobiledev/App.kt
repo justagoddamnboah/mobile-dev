@@ -1,11 +1,11 @@
 package com.example.mobiledev
 
 import android.app.Application
-import com.example.mobiledev.prefs.ThemeHelper
+import com.example.mobiledev.prefs.ThemeManager
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-        ThemeHelper.applyTheme(this)
+        ThemeManager.applyTheme(this)
     }
 }

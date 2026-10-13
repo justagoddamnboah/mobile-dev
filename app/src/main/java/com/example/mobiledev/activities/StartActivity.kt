@@ -12,7 +12,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.R
 
-class StartActivity : AppCompatActivity() {
+class StartActivity : BaseActivity() {
     companion object {
         const val USERNAME : String = "USERNAME"
         const val PASSWORD : String = "PASSWORD"
