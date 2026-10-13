@@ -1,4 +1,4 @@
-package com.example.mobiledev
+package com.example.mobiledev.activities
 
 import android.content.Intent
 import android.graphics.Color
@@ -12,7 +12,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.mobiledev.StartActivity.Companion.USERNAME
+import com.example.mobiledev.R
+import com.example.mobiledev.activities.StartActivity.Companion.USERNAME
 
 class ContentActivity : AppCompatActivity() {
     data class Pony(
