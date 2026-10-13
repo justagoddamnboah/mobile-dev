@@ -214,7 +214,7 @@
                     android:id="@+id/btn_create_backup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="#FF1493"
+                    android:backgroundTint="#5FA4FF"
                     android:text="Создать резервную копию"
                     android:textColor="@color/text_primary" />
 

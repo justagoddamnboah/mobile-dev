@@ -3,4 +3,8 @@
     <color name="background">#FFFFFF</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#000000</color>
+
+    <color name="purple_primary">#673AB7</color>
+    <color name="orange_primary">#FF5722</color>
+    <color name="pink_primary">#FF1493</color>
 </resources>
