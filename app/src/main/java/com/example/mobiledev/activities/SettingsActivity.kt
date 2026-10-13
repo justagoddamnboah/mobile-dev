@@ -1,11 +1,14 @@
 package com.example.mobiledev.activities
 
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.R
@@ -14,7 +17,7 @@ import com.example.mobiledev.prefs.ThemeManager
 import com.google.android.material.snackbar.Snackbar
 
 class SettingsActivity : BaseActivity() {
-
+    private lateinit var spinnerPalette: Spinner
     private lateinit var switchTheme: Switch
     private lateinit var tvBackupStatus: TextView
     private lateinit var tvBackupHint: TextView
@@ -76,6 +79,40 @@ class SettingsActivity : BaseActivity() {
             } else {
                 Snackbar.make(findViewById(R.id.settings), "Ошибка при удалении копии", Snackbar.LENGTH_SHORT).show()
             }
+        }
+
+        spinnerPalette = findViewById(R.id.spinner_palette)
+        setupPalette()
+    }
+
+    private fun setupPalette() {
+        val palettes = arrayOf("Розовая", "Синяя", "Зеленая")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, palettes)
+        spinnerPalette.adapter = adapter
+
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        val currentPalette = prefs.getString("palette", "pink") ?: "pink"
+
+        val currentIndex = when (currentPalette) {
+            "blue" -> 1
+            "green" -> 2
+            else -> 0
+        }
+        spinnerPalette.setSelection(currentIndex)
+
+        spinnerPalette.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                val paletteKey = when (pos) {
+                    1 -> "blue"
+                    2 -> "green"
+                    else -> "pink"
+                }
+
+                if (paletteKey != currentPalette) {
+                    prefs.edit().putString("palette", paletteKey).apply()
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
