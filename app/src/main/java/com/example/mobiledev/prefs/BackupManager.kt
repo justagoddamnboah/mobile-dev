@@ -13,6 +13,11 @@ object BackupManager {
         return File(context.filesDir, BACKUP_FILE_NAME).exists()
     }
 
+    fun getLastModifiedTime(context: Context): Long {
+        val file = File(context.filesDir, BACKUP_FILE_NAME)
+        return if (file.exists()) file.lastModified() else 0L
+    }
+
     fun createBackup(context: Context, ponies: List<Pony>): Boolean {
         return try {
             val jsonArray = JSONArray()

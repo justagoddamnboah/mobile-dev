@@ -3,7 +3,4 @@
     <color name="background">#FFFFFF</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#000000</color>
-
-    <color name="pink_background">#FF1493</color>
-    <color name="blue_background">#0000FF</color>
 </resources>

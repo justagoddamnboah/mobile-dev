@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
@@ -12,7 +13,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.R
+import com.example.mobiledev.models.Pony
 import com.example.mobiledev.prefs.BackupManager
+import com.example.mobiledev.prefs.FontManager
+import com.example.mobiledev.prefs.PaletteManager
 import com.example.mobiledev.prefs.ThemeManager
 import com.google.android.material.snackbar.Snackbar
 
@@ -52,68 +56,71 @@ class SettingsActivity : BaseActivity() {
 
         updateBackupUI()
 
-        btnCreateBackup.setOnClickListener {
-            val success = BackupManager.createBackup(this, getDefaultPonies())
-            if (success) {
-                Snackbar.make(findViewById(R.id.settings), "Резервная копия успешно создана", Snackbar.LENGTH_SHORT).show()
-                updateBackupUI()
-            } else {
-                Snackbar.make(findViewById(R.id.settings), "Ошибка при создании копии", Snackbar.LENGTH_SHORT).show()
-            }
-        }
-
-        btnRestoreBackup.setOnClickListener {
-            val restoredPonies = BackupManager.restoreBackup(this)
-            if (restoredPonies != null) {
-                Snackbar.make(findViewById(R.id.settings), "Данные успешно восстановлены!", Snackbar.LENGTH_SHORT).show()
-            } else {
-                Snackbar.make(findViewById(R.id.settings), "Ошибка при восстановлении данных", Snackbar.LENGTH_SHORT).show()
-            }
-        }
-
-        btnDeleteBackup.setOnClickListener {
-            val success = BackupManager.deleteBackup(this)
-            if (success) {
-                Snackbar.make(findViewById(R.id.settings), "Резервная копия удалена", Snackbar.LENGTH_SHORT).show()
-                updateBackupUI()
-            } else {
-                Snackbar.make(findViewById(R.id.settings), "Ошибка при удалении копии", Snackbar.LENGTH_SHORT).show()
-            }
-        }
+        setupBackup()
 
         spinnerPalette = findViewById(R.id.spinner_palette)
         setupPalette()
+        setupFontSize()
+    }
+
+    private fun setupFontSize() {
+        val seekFontSize = findViewById<SeekBar>(R.id.seek_font_size)
+        val currentScale = FontManager.getFontScale(this)
+        seekFontSize.progress = FontManager.getProgressFromScale(currentScale)
+
+        seekFontSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    val newScale = FontManager.getScaleFromProgress(progress)
+                    FontManager.setFontScale(this@SettingsActivity, newScale)
+                    recreate()
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupPalette() {
-        val palettes = arrayOf("Розовая", "Синяя", "Зеленая")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, palettes)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, PaletteManager.getPaletteNames())
         spinnerPalette.adapter = adapter
 
-        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-        val currentPalette = prefs.getString("palette", "pink") ?: "pink"
-
-        val currentIndex = when (currentPalette) {
-            "blue" -> 1
-            "green" -> 2
-            else -> 0
-        }
-        spinnerPalette.setSelection(currentIndex)
+        val currentPalette = PaletteManager.getPalette(this)
+        spinnerPalette.setSelection(PaletteManager.getPositionByPaletteKey(currentPalette))
 
         spinnerPalette.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                val paletteKey = when (pos) {
-                    1 -> "blue"
-                    2 -> "green"
-                    else -> "pink"
-                }
-
-                if (paletteKey != currentPalette) {
-                    prefs.edit().putString("palette", paletteKey).apply()
+                val newPaletteKey = PaletteManager.getPaletteKeyByPosition(pos)
+                if (newPaletteKey != currentPalette) {
+                    PaletteManager.setPalette(this@SettingsActivity, newPaletteKey)
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
+    }
+
+    private fun setupBackup() {
+        val rootView = findViewById<View>(R.id.settings)
+
+        btnCreateBackup.setOnClickListener {
+            val success = BackupManager.createBackup(this, getBackupPonies())
+            showBackupSnackbar(rootView, success, "Резервная копия создана", "Ошибка создания")
+            if (success) updateBackupUI()
+        }
+        btnRestoreBackup.setOnClickListener {
+            val success = BackupManager.restoreBackup(this) != null
+            showBackupSnackbar(rootView, success, "Данные успешно восстановлены", "Ошибка восстановления")
+        }
+        btnDeleteBackup.setOnClickListener {
+            val success = BackupManager.deleteBackup(this)
+            showBackupSnackbar(rootView, success, "Резервная копия удалена", "Ошибка удаления")
+            if (success) updateBackupUI()
+        }
+    }
+
+    private fun showBackupSnackbar(view: View, success: Boolean, successMsg: String, errorMsg: String) {
+        val message = if (success) successMsg else errorMsg
+        Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
     }
 
     private fun updateBackupUI() {
@@ -122,20 +129,21 @@ class SettingsActivity : BaseActivity() {
         btnRestoreBackup.isEnabled = hasBackup
         btnDeleteBackup.isEnabled = hasBackup
 
-        if (hasBackup) {
-            tvBackupStatus.text = "Резервная копия найдена"
-            tvBackupStatus.setTextColor(getColor(R.color.text_secondary))
-            tvBackupHint.text = "Вы можете восстановить данные или удалить старую копию."
+        tvBackupStatus.apply {
+            text = if (hasBackup) "Резервная копия найдена" else "Резервная копия не найдена"
+            setTextColor(getColor(R.color.text_secondary))
+        }
+        tvBackupHint.text = if (hasBackup) {
+            "Вы можете восстановить данные или удалить старую копию."
         } else {
-            tvBackupStatus.text = "Резервная копия не найдена"
-            tvBackupHint.text = "Создайте копию, чтобы сохранить текущий список жителей Эквестрии."
+            "Создайте копию, чтобы сохранить текущий список жителей Эквестрии."
         }
     }
 
-    private fun getDefaultPonies(): List<com.example.mobiledev.models.Pony> {
+    private fun getBackupPonies(): List<Pony> {
         return listOf(
-            com.example.mobiledev.models.Pony("Сумеречная Искорка", "Аликорн", "Женский", R.drawable.twilight_sparkle, android.graphics.Color.rgb(230, 210, 255)),
-            com.example.mobiledev.models.Pony("Спайк", "Дракон", "Мужской", R.drawable.spike, android.graphics.Color.rgb(190, 235, 200))
+            Pony("Сумеречная Искорка", "Аликорн", "Женский", R.drawable.twilight_sparkle, android.graphics.Color.rgb(230, 210, 255)),
+            Pony("Спайк", "Дракон", "Мужской", R.drawable.spike, android.graphics.Color.rgb(190, 235, 200))
         )
     }
 }
