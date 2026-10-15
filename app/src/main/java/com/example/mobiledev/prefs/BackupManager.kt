@@ -1,6 +1,7 @@
 package com.example.mobiledev.prefs
 
 import android.content.Context
+import androidx.core.content.edit
 import com.example.mobiledev.models.Pony
 import org.json.JSONArray
 import org.json.JSONObject
@@ -9,13 +10,21 @@ import java.io.File
 object BackupManager {
     private const val BACKUP_FILE_NAME = "ponies_backup.json"
 
-    fun hasBackup(context: Context): Boolean {
-        return File(context.filesDir, BACKUP_FILE_NAME).exists()
+    private const val KEY_USE_BACKUP = "use_backup"
+
+    fun setUseBackup(context: Context, use: Boolean) {
+        context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit {
+            putBoolean(KEY_USE_BACKUP, use)
+        }
     }
 
-    fun getLastModifiedTime(context: Context): Long {
-        val file = File(context.filesDir, BACKUP_FILE_NAME)
-        return if (file.exists()) file.lastModified() else 0L
+    fun shouldUseBackup(context: Context): Boolean {
+        return context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            .getBoolean(KEY_USE_BACKUP, false)
+    }
+
+    fun hasBackup(context: Context): Boolean {
+        return File(context.filesDir, BACKUP_FILE_NAME).exists()
     }
 
     fun createBackup(context: Context, ponies: List<Pony>): Boolean {

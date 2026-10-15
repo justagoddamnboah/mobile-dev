@@ -107,15 +107,27 @@ class SettingsActivity : BaseActivity() {
 
         btnCreateBackup.setOnClickListener {
             val success = BackupManager.createBackup(this, getBackupPonies())
+
+            BackupManager.setUseBackup(this, false)
+
             showBackupSnackbar(rootView, success, "Резервная копия создана", "Ошибка создания")
             if (success) updateBackupUI()
         }
+
         btnRestoreBackup.setOnClickListener {
-            val success = BackupManager.restoreBackup(this) != null
+            val restoredList = BackupManager.restoreBackup(this)
+            val success = restoredList != null
+
+            if (success) {
+                BackupManager.setUseBackup(this, true)
+            }
+
             showBackupSnackbar(rootView, success, "Данные успешно восстановлены", "Ошибка восстановления")
         }
+
         btnDeleteBackup.setOnClickListener {
             val success = BackupManager.deleteBackup(this)
+
             showBackupSnackbar(rootView, success, "Резервная копия удалена", "Ошибка удаления")
             if (success) updateBackupUI()
         }
@@ -136,7 +148,6 @@ class SettingsActivity : BaseActivity() {
             visibility = if (hasBackup) View.VISIBLE else View.GONE
             isEnabled = hasBackup
         }
-
         tvBackupStatus.apply {
             text = if (hasBackup) "Резервная копия найдена" else "Резервная копия не найдена"
             setTextColor(getColor(R.color.text_secondary))

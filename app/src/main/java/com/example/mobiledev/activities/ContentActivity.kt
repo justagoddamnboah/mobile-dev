@@ -18,9 +18,8 @@ import com.example.mobiledev.prefs.BackupManager
 
 class ContentActivity : BaseActivity() {
     private val ponies: List<Pony> by lazy {
-        val restored = BackupManager.restoreBackup(this)
-        if (restored != null && restored.isNotEmpty()) {
-            restored
+        if (BackupManager.shouldUseBackup(this)) {
+            BackupManager.restoreBackup(this) ?: getAllPonies()
         } else {
             getAllPonies()
         }
@@ -54,6 +53,11 @@ class ContentActivity : BaseActivity() {
             attention.text = "Привет, $name! Знакомься с жителями Эквестрии."
             showPonies()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        showAttention(intent)
     }
 
     private fun showPonies() {
