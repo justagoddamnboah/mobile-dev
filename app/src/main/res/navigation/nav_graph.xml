@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/startFragment">
+
+    <fragment
+        android:id="@+id/startFragment"
+        android:name="com.example.mobiledev.fragments.StartFragment"
+        android:label="StartFragment"
+        tools:layout="@layout/fragment_start">
+        <action
+            android:id="@+id/action_start_to_registration"
+            app:destination="@id/registrationFragment" />
+        <action
+            android:id="@+id/action_start_to_content"
+            app:destination="@id/contentFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registrationFragment"
+        android:name="com.example.mobiledev.fragments.RegistrationFragment"
+        android:label="RegistrationFragment"
+        tools:layout="@layout/fragment_registration" />
+
+    <fragment
+        android:id="@+id/contentFragment"
+        android:name="com.example.mobiledev.fragments.ContentFragment"
+        android:label="ContentFragment"
+        tools:layout="@layout/fragment_content">
+        <!-- SafeArgs: аргумент для передачи имени -->
+        <argument
+            android:name="username"
+            app:argType="string"
+            android:defaultValue="Незнакомец" />
+        <action
+            android:id="@+id/action_content_to_settings"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.mobiledev.fragments.SettingsFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+</navigation>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/settings"
-    android:layout_margin="15dp"
-    >
+    android:id="@+id/fragment_settings"
+    android:layout_margin="15dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,9 +21,7 @@
             android:backgroundTint="?attr/colorPrimary"
             android:textColor="@color/text_primary"
             android:minHeight="0dp"
-            android:minWidth="0dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:minWidth="0dp" />
 
         <TextView
             android:layout_width="match_parent"
@@ -41,7 +39,6 @@
             android:text="Настрой внешний вид приложения"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
-
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -105,7 +102,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp" />
-
         </LinearLayout>
 
         <!-- Размер шрифта -->
@@ -156,7 +152,6 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
-
         </LinearLayout>
 
         <!-- Секция Резервного копирования -->
@@ -240,88 +235,5 @@
             </LinearLayout>
         </LinearLayout>
 
-
-        <!--<LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="#FFFFFF"
-            android:elevation="3dp"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Размер шрифта"
-                android:textColor="#583653"
-                android:textSize="17sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_font_size_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="16 sp"
-                android:textColor="#856D83"
-                android:textSize="14sp" />
-
-            <SeekBar
-                android:id="@+id/seek_font_size"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="12"
-                android:progress="4" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Маленький                  Большой"
-                android:textColor="#856D83"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="#FFFFFF"
-            android:elevation="3dp"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Язык приложения"
-                android:textColor="#583653"
-                android:textSize="17sp"
-                android:textStyle="bold" />
-
-            <Spinner
-                android:id="@+id/spinner_language"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
-
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btn_save_appearance"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:backgroundTint="#FF1493"
-            android:minHeight="52dp"
-            android:text="Сохранить оформление"
-            android:textAllCaps="false"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp" /> -->
-
     </LinearLayout>
-
 </ScrollView>
