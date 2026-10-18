@@ -18,17 +18,21 @@ object FontManager {
     }
 
     fun setFontScale(context: Context, scale: Float) {
+        val safeScale = scale.coerceIn(MIN_SCALE, MAX_SCALE)
+
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit {
-                putFloat(KEY_FONT_SCALE, scale)
+                putFloat(KEY_FONT_SCALE, safeScale)
             }
     }
 
     fun getProgressFromScale(scale: Float): Int {
-        return ((scale - MIN_SCALE) / SCALE_STEP).toInt().coerceIn(0, MAX_PROGRESS)
+        val progress = ((scale - MIN_SCALE) / SCALE_STEP).toInt()
+        return progress.coerceIn(0, MAX_PROGRESS)
     }
 
     fun getScaleFromProgress(progress: Int): Float {
-        return MIN_SCALE + (progress * SCALE_STEP)
+        val safeProgress = progress.coerceIn(0, MAX_PROGRESS)
+        return MIN_SCALE + (safeProgress * SCALE_STEP)
     }
 }

@@ -13,6 +13,7 @@ import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentSettingsBinding
 import com.example.mobiledev.extensions.BaseFragment
 import com.example.mobiledev.models.Pony
+import com.example.mobiledev.models.PonyRepository
 import com.example.mobiledev.prefs.BackupManager
 import com.example.mobiledev.prefs.FontManager
 import com.example.mobiledev.prefs.PaletteManager
@@ -81,7 +82,7 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
 
     private fun setupBackup() {
         binding.btnCreateBackup.setOnClickListener {
-            val success = BackupManager.createBackup(requireContext(), getBackupPonies())
+            val success = BackupManager.createBackup(requireContext(), PonyRepository.getBackupPonies())
             BackupManager.setUseBackup(requireContext(), false)
             showBackupSnackbar(success, "Резервная копия создана", "Ошибка создания")
             if (success) updateBackupUI()
