@@ -34,7 +34,7 @@ object BackupManager {
                 val obj = JSONObject().apply {
                     put("name", pony.name)
                     put("kind", pony.kind)
-                    put("sex", pony.sex)
+                    put("sex", pony.gender)
                     put("photoSrc", pony.photoSrc)
                     put("color", pony.color)
                 }
@@ -62,7 +62,7 @@ object BackupManager {
                 ponies.add(Pony(
                     name = obj.getString("name"),
                     kind = obj.getString("kind"),
-                    sex = obj.getString("sex"),
+                    gender = obj.getString("sex"),
                     photoSrc = obj.getInt("photoSrc"),
                     color = obj.getInt("color")
                 ))

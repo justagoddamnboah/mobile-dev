@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mobiledev.R
+import com.example.mobiledev.adapters.PonyAdapter
 import com.example.mobiledev.databinding.FragmentContentBinding
 import com.example.mobiledev.extensions.BaseFragment
 import com.example.mobiledev.models.Pony
@@ -18,7 +18,9 @@ import com.example.mobiledev.prefs.BackupManager
 class ContentFragment : BaseFragment(R.layout.fragment_content) {
     private var _binding: FragmentContentBinding? = null
     private val binding get() = _binding!!
+
     private val args: ContentFragmentArgs by navArgs()
+    private val ponyAdapter = PonyAdapter()
 
     private fun getCurrentPonies(): List<Pony> {
         return if (BackupManager.shouldUseBackup(requireContext())) {
@@ -36,56 +38,53 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.recyclerPonies.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerPonies.adapter = ponyAdapter
+
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+
+        val isAuthorized = args.username != "Незнакомец" && args.username.isNotEmpty()
+        binding.btnSettings.visibility = if (isAuthorized) View.VISIBLE else View.GONE
         binding.btnSettings.setOnClickListener {
             findNavController().navigate(R.id.action_content_to_settings)
         }
-
         showAttention()
     }
 
     override fun onResume() {
         super.onResume()
+        val isAuthorized = args.username != "Незнакомец" && args.username.isNotEmpty()
+        binding.btnSettings.visibility = if (isAuthorized) View.VISIBLE else View.GONE
         showAttention()
     }
 
     private fun showAttention() {
         val name = args.username
         if (name == "Незнакомец" || name.isEmpty()) {
-            binding.btnSettings.visibility = View.GONE
             binding.attention.text = "Пони не готовы с вами знакомиться, так как они не знают вашего имени. Вы что, оборотень?"
-            binding.poniesContainer.removeAllViews()
+            binding.recyclerPonies.visibility = View.GONE
         } else {
-            binding.btnSettings.visibility = View.VISIBLE
             binding.attention.text = "Привет, $name! Знакомься с жителями Эквестрии."
+            binding.recyclerPonies.visibility = View.VISIBLE
             showPonies()
         }
     }
 
     private fun showPonies() {
-        binding.poniesContainer.removeAllViews()
-        val ponies = getCurrentPonies()
-        if (ponies.isEmpty()) {
-            if (BackupManager.hasBackup(requireContext())) {
-                binding.attention.text = "Данные повреждены, но найдена резервная копия."
+        val currentPonies = getCurrentPonies()
+
+        if (currentPonies.isEmpty()) {
+            binding.attention.text = if (BackupManager.hasBackup(requireContext())) {
+                "Найдена резервная копия."
             } else {
-                binding.attention.text = "Данные отсутствуют."
+                "Данные отсутствуют."
             }
+            binding.recyclerPonies.visibility = View.GONE
             return
         }
 
-        ponies.forEach { pony ->
-            val card = layoutInflater.inflate(R.layout.pony_card, binding.poniesContainer, false)
-            card.findViewById<ImageView>(R.id.pony_photo).apply {
-                setImageResource(pony.photoSrc)
-                contentDescription = pony.name
-            }
-            card.findViewById<TextView>(R.id.pony_name).text = pony.name
-            card.findViewById<TextView>(R.id.pony_kind).text = "Вид: ${pony.kind}"
-            card.findViewById<TextView>(R.id.pony_sex).text = "Пол: ${pony.sex}"
-            card.findViewById<View>(R.id.pony_color_bar).setBackgroundColor(pony.color)
-            binding.poniesContainer.addView(card)
-        }
+        ponyAdapter.submitList(currentPonies)
+        binding.recyclerPonies.visibility = View.VISIBLE
     }
 
     override fun onDestroyView() {

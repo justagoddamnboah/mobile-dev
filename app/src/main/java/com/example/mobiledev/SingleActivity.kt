@@ -3,16 +3,18 @@ package com.example.mobiledev
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.mobiledev.databinding.ActivityBinding
 import com.example.mobiledev.prefs.FontManager
 import com.example.mobiledev.prefs.PaletteManager
 import com.example.mobiledev.prefs.ThemeManager
 
-class SingleActivity : AppCompatActivity(R.layout.activity) {
+class SingleActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityBinding
 
     override fun attachBaseContext(newBase: Context) {
         val scale = FontManager.getFontScale(newBase)
@@ -27,11 +29,14 @@ class SingleActivity : AppCompatActivity(R.layout.activity) {
         setTheme(PaletteManager.getThemeResByPalette(palette))
 
         super.onCreate(savedInstanceState)
+
+        binding = ActivityBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         Log.d("SingleActivity", "onCreate()")
         enableEdgeToEdge()
 
-        val navHostView = findViewById<View>(R.id.nav_host_fragment)
-        ViewCompat.setOnApplyWindowInsetsListener(navHostView) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navHostFragment) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
