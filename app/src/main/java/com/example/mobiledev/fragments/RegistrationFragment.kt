@@ -9,6 +9,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentRegistrationBinding
 import com.example.mobiledev.extensions.BaseFragment
+import com.example.mobiledev.models.ProfilePictureRepository
 import com.example.mobiledev.viewmodel.UserViewModel
 import com.google.android.material.snackbar.Snackbar
 
@@ -46,6 +47,10 @@ class RegistrationFragment : BaseFragment(R.layout.fragment_registration) {
         }
         userViewModel.currentUsername = username
         userViewModel.currentPassword = password
+
+        if (userViewModel.currentProfilePictureResId == null) {
+            userViewModel.currentProfilePictureResId = ProfilePictureRepository.getAvailableProfilePictures().first()
+        }
 
         findNavController().popBackStack()
     }

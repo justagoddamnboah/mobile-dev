@@ -1,6 +1,5 @@
 package com.example.mobiledev.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,21 +7,24 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentSettingsBinding
 import com.example.mobiledev.extensions.BaseFragment
-import com.example.mobiledev.models.Pony
+import com.example.mobiledev.models.ProfilePictureRepository
 import com.example.mobiledev.models.PonyRepository
 import com.example.mobiledev.prefs.BackupManager
 import com.example.mobiledev.prefs.FontManager
 import com.example.mobiledev.prefs.PaletteManager
 import com.example.mobiledev.prefs.ThemeManager
+import com.example.mobiledev.viewmodel.UserViewModel
 import com.google.android.material.snackbar.Snackbar
 
 class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
+    private val userViewModel: UserViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
@@ -41,6 +43,7 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
         setupFontSize()
         setupPalette()
         setupBackup()
+        setupProfilePicture()
         updateBackupUI()
     }
 
@@ -126,11 +129,25 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
         }
     }
 
-    private fun getBackupPonies(): List<Pony> {
-        return listOf(
-            Pony("Сумеречная Искорка", "Аликорн", "Женский", R.drawable.twilight_sparkle, Color.rgb(230, 210, 255)),
-            Pony("Спайк", "Дракон", "Мужской", R.drawable.spike, Color.rgb(190, 235, 200))
-        )
+    private fun setupProfilePicture() {
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, ProfilePictureRepository.getProfilePictureNames())
+        binding.spinnerProfilePicture.adapter = adapter
+
+        val currentProfilePicture = userViewModel.currentProfilePictureResId ?: ProfilePictureRepository.getAvailableProfilePictures().first()
+        binding.spinnerProfilePicture.setSelection(ProfilePictureRepository.getPositionByProfilePicture(currentProfilePicture))
+
+        binding.spinnerProfilePicture.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                val selectedProfilePicture = ProfilePictureRepository.getProfilePictureByPosition(pos)
+                val actualCurrentProfilePicture = userViewModel.currentProfilePictureResId ?: ProfilePictureRepository.getAvailableProfilePictures().first()
+
+                if (selectedProfilePicture != actualCurrentProfilePicture) {
+                    userViewModel.currentProfilePictureResId = selectedProfilePicture
+                    Snackbar.make(binding.root, "Аватарка обновлена!", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
     }
 
     override fun onDestroyView() {

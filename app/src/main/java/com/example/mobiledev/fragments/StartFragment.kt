@@ -24,7 +24,7 @@ class StartFragment : BaseFragment(R.layout.fragment_start) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateGreeting()
+        updateUI()
 
         binding.btnToRegister.setOnClickListener {
             findNavController().navigate(R.id.action_start_to_registration)
@@ -40,15 +40,23 @@ class StartFragment : BaseFragment(R.layout.fragment_start) {
 
     override fun onResume() {
         super.onResume()
-        updateGreeting()
+        updateUI()
     }
 
-    private fun updateGreeting() {
+    private fun updateUI() {
         val name = userViewModel.currentUsername
+
         if (name != null) {
             binding.ponyQuote.text = "Привет, $name!"
+            binding.btnToRegister.visibility = View.GONE
+            binding.userProfilePicture.visibility = View.VISIBLE
+
+            val profilePictureResId = userViewModel.currentProfilePictureResId ?: R.drawable.twilight_sparkle
+            binding.userProfilePicture.setImageResource(profilePictureResId)
         } else {
             binding.ponyQuote.text = "Добро пожаловать в Эквестрию! Здесь ты можешь познакомиться со всеми жителями!"
+            binding.btnToRegister.visibility = View.VISIBLE
+            binding.userProfilePicture.visibility = View.GONE
         }
     }
 
