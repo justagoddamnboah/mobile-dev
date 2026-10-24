@@ -55,7 +55,7 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
                 if (fromUser) {
                     val newScale = FontManager.getScaleFromProgress(progress)
                     FontManager.setFontScale(requireContext(), newScale)
-                    requireActivity().recreate() // Пересоздаем Activity для применения
+                    requireActivity().recreate()
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}

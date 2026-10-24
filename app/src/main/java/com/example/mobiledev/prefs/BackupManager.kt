@@ -2,14 +2,13 @@ package com.example.mobiledev.prefs
 
 import android.content.Context
 import androidx.core.content.edit
-import com.example.mobiledev.models.Pony
+import com.example.mobiledev.network.Pony
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
 object BackupManager {
     private const val BACKUP_FILE_NAME = "ponies_backup.json"
-
     private const val KEY_USE_BACKUP = "use_backup"
 
     fun setUseBackup(context: Context, use: Boolean) {
@@ -32,11 +31,11 @@ object BackupManager {
             val jsonArray = JSONArray()
             for (pony in ponies) {
                 val obj = JSONObject().apply {
+                    put("id", pony.id)
                     put("name", pony.name)
                     put("kind", pony.kind)
-                    put("sex", pony.gender)
-                    put("photoSrc", pony.photoSrc)
-                    put("color", pony.color)
+                    put("sex", pony.sex)
+                    put("imageUrl", pony.imageUrl)
                 }
                 jsonArray.put(obj)
             }
@@ -60,11 +59,11 @@ object BackupManager {
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
                 ponies.add(Pony(
+                    id = obj.optInt("id", 0),
                     name = obj.getString("name"),
-                    kind = obj.getString("kind"),
-                    gender = obj.getString("sex"),
-                    photoSrc = obj.getInt("photoSrc"),
-                    color = obj.getInt("color")
+                    kind = obj.optString("kind", "Неизвестно"),
+                    sex = obj.optString("sex", "Неизвестно"),
+                    imageUrl = obj.optString("imageUrl", "")
                 ))
             }
             ponies

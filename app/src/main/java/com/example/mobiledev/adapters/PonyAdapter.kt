@@ -3,26 +3,39 @@ package com.example.mobiledev.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.example.mobiledev.databinding.PonyCardBinding
-import com.example.mobiledev.models.Pony
+import com.example.mobiledev.network.Pony
 
 class PonyAdapter : RecyclerView.Adapter<PonyAdapter.PonyViewHolder>() {
 
-    private var ponies: List<Pony> = emptyList()
+    private val ponies = mutableListOf<Pony>()
 
-    fun submitList(newPonies: List<Pony>) {
-        ponies = newPonies
-        notifyDataSetChanged()
+    fun submitList(newPonies: List<Pony>, isAppend: Boolean = false) {
+        if (isAppend) {
+            val startPosition = ponies.size
+            ponies.addAll(newPonies)
+            notifyItemRangeInserted(startPosition, newPonies.size)
+        } else {
+            ponies.clear()
+            ponies.addAll(newPonies)
+            notifyDataSetChanged()
+        }
     }
 
     class PonyViewHolder(private val binding: PonyCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(pony: Pony) {
-            binding.ponyPhoto.setImageResource(pony.photoSrc)
-            binding.ponyPhoto.contentDescription = pony.name
             binding.ponyName.text = pony.name
             binding.ponyKind.text = "Вид: ${pony.kind}"
-            binding.ponyGender.text = "Пол: ${pony.gender}"
-            binding.ponyColorBar.setBackgroundColor(pony.color)
+            binding.ponySex.text = "Пол: ${pony.sex}"
+
+            if (pony.imageUrl.isNotEmpty()) {
+                binding.ponyPhoto.load(pony.imageUrl) {
+                    crossfade(true)
+                }
+            } else {
+                binding.ponyPhoto.setImageDrawable(null)
+            }
         }
     }
 
