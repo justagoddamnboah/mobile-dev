@@ -33,8 +33,9 @@ object BackupManager {
                 val obj = JSONObject().apply {
                     put("id", pony.id)
                     put("name", pony.name)
-                    put("kind", pony.kind)
                     put("sex", pony.sex)
+                    put("residence", pony.residence)
+                    put("kind", JSONArray(pony.kind))
                     put("imageUrl", pony.imageUrl)
                 }
                 jsonArray.put(obj)
@@ -58,13 +59,27 @@ object BackupManager {
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-                ponies.add(Pony(
-                    id = obj.optInt("id", 0),
-                    name = obj.getString("name"),
-                    kind = obj.optString("kind", "Неизвестно"),
-                    sex = obj.optString("sex", "Неизвестно"),
-                    imageUrl = obj.optString("imageUrl", "")
-                ))
+
+                val kindArray = obj.optJSONArray("kind")
+                val kindList = if (kindArray != null) {
+                    (0 until kindArray.length()).map { index ->
+                        kindArray.getString(index)
+                    }
+                } else {
+                    val oldKind = obj.optString("kind", "")
+                    if (oldKind.isNotBlank()) listOf(oldKind) else emptyList()
+                }
+
+                ponies.add(
+                    Pony(
+                        id = obj.optInt("id", 0),
+                        name = obj.getString("name"),
+                        sex = obj.optString("sex").takeIf { it.isNotBlank() },
+                        residence = obj.optString("residence").takeIf { it.isNotBlank() },
+                        kind = kindList,
+                        imageUrl = obj.optString("imageUrl", "")
+                    )
+                )
             }
             ponies
         } catch (e: Exception) {
@@ -75,8 +90,20 @@ object BackupManager {
 
     fun deleteBackup(context: Context): Boolean {
         return try {
-            File(context.filesDir, BACKUP_FILE_NAME).delete()
-            true
+            val file = File(context.filesDir, BACKUP_FILE_NAME)
+
+            val deleted = if (file.exists()) {
+                file.delete()
+            } else {
+                true
+            }
+
+            if (deleted) {
+                setUseBackup(context, false)
+            }
+
+            deleted
+
         } catch (e: Exception) {
             e.printStackTrace()
             false

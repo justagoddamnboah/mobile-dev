@@ -20,16 +20,18 @@ data class PonyApiResponse(
 data class RawPonyData(
     val id: Int,
     val name: String,
-    val sex: String,
-    val kind: List<String>,
-    val image: List<String>
+    val sex: String? = null,
+    val residence: String? = null,
+    val kind: List<String> = emptyList(),
+    val image: List<String> = emptyList()
 )
 
 data class Pony(
     val id: Int,
     val name: String,
-    val sex: String,
-    val kind: String,
+    val sex: String?,
+    val residence: String?,
+    val kind: List<String>,
     val imageUrl: String
 )
 
@@ -42,7 +44,7 @@ object PonyNetworkRepository {
 
     suspend fun getPonies(limit: Int = 5, offset: Int = 0): Result<List<Pony>> {
         return try {
-            val response: PonyApiResponse = client.get("https://ponyapi.net/v1/character/by-residence/ponyville") {
+            val response: PonyApiResponse = client.get("https://ponyapi.net/v1/character/all") {
                 url {
                     parameters.append("limit", limit.toString())
                     parameters.append("offset", offset.toString())
@@ -55,7 +57,8 @@ object PonyNetworkRepository {
                         id = raw.id,
                         name = raw.name,
                         sex = raw.sex,
-                        kind = raw.kind.firstOrNull() ?: "Неизвестно",
+                        residence = raw.residence,
+                        kind = raw.kind,
                         imageUrl = raw.image.firstOrNull() ?: ""
                     )
                 }

@@ -13,6 +13,7 @@ import com.example.mobiledev.R
 import com.example.mobiledev.adapters.PonyAdapter
 import com.example.mobiledev.databinding.FragmentContentBinding
 import com.example.mobiledev.extensions.BaseFragment
+import com.example.mobiledev.models.PonyRepository
 import com.example.mobiledev.network.Pony
 import com.example.mobiledev.network.PonyNetworkRepository
 import com.example.mobiledev.prefs.BackupManager
@@ -137,11 +138,9 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
             binding.btnLoadMore.text = "Загрузка..."
         }
 
-        // Запускаем корутину, привязанную к жизненному циклу View
         viewLifecycleOwner.lifecycleScope.launch {
 
             try {
-                // Сетевой запрос выполняется в фоновом потоке
                 val result = withContext(Dispatchers.IO) {
                     PonyNetworkRepository.getPonies(
                         limit = pageSize,
@@ -177,7 +176,13 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
                         binding.attention.visibility = View.VISIBLE
                         binding.recyclerPonies.visibility = View.VISIBLE
 
+                        if (isAppend) {
+                            PonyRepository.addPonies(ponies)
+                        } else {
+                            PonyRepository.setPonies(ponies)
+                        }
                         ponyAdapter.submitList(ponies, isAppend = isAppend)
+
                         hasLoadedData = true
 
                         if (recyclerViewState != null && !isAppend) {

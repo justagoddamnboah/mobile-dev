@@ -23,12 +23,18 @@ class PonyAdapter : RecyclerView.Adapter<PonyAdapter.PonyViewHolder>() {
         }
     }
 
-    class PonyViewHolder(private val binding: PonyCardBinding) : RecyclerView.ViewHolder(binding.root) {
+    class PonyViewHolder(
+        private val binding: PonyCardBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+
         fun bind(pony: Pony) {
             binding.ponyName.text = pony.name
-            binding.ponyKind.text = "Вид: ${pony.kind}"
-            binding.ponySex.text = "Пол: ${pony.sex}"
-
+            binding.ponyKind.text =
+                "Вид: ${pony.kind.joinToString(", ").ifBlank { "Неизвестно" }}"
+            binding.ponySex.text =
+                "Пол: ${pony.sex ?: "Неизвестно"}"
+            binding.ponyResidence.text =
+                "Место проживания: ${pony.residence ?: "Неизвестно"}"
             if (pony.imageUrl.isNotEmpty()) {
                 binding.ponyPhoto.load(pony.imageUrl) {
                     crossfade(true)
@@ -39,12 +45,22 @@ class PonyAdapter : RecyclerView.Adapter<PonyAdapter.PonyViewHolder>() {
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PonyViewHolder {
-        val binding = PonyCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): PonyViewHolder {
+        val binding = PonyCardBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
         return PonyViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: PonyViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: PonyViewHolder,
+        position: Int
+    ) {
         holder.bind(ponies[position])
     }
 

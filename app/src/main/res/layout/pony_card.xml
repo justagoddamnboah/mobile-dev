@@ -12,7 +12,7 @@
 
     <ImageView
         android:id="@+id/pony_photo"
-        android:contentDescription="Фотография пони"
+        android:contentDescription="Фотография персонажа"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:scaleType="centerCrop" />
@@ -26,26 +26,34 @@
 
         <TextView
             android:id="@+id/pony_name"
-            android:textSize="18sp"
-            android:textStyle="bold"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/pony_kind"
-            android:textSize="15sp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/pony_sex"
-            android:textSize="15sp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/pony_residence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp" />
+
     </LinearLayout>
 
     <View
         android:id="@+id/pony_color_bar"
         android:layout_width="6dp"
         android:layout_height="match_parent" />
+
 </LinearLayout>
