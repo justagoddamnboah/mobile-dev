@@ -8,6 +8,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentSettingsBinding
@@ -17,29 +18,36 @@ import com.example.mobiledev.models.PonyRepository
 import com.example.mobiledev.prefs.BackupManager
 import com.example.mobiledev.prefs.FontManager
 import com.example.mobiledev.prefs.PaletteManager
+import com.example.mobiledev.prefs.SettingsDSStore
 import com.example.mobiledev.prefs.ThemeManager
 import com.example.mobiledev.viewmodel.UserViewModel
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
     private val userViewModel: UserViewModel by activityViewModels()
+    private lateinit var settingsDSStore: SettingsDSStore
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.btnBackToContent.setOnClickListener { findNavController().popBackStack() }
-
-        binding.switchDarkTheme.isChecked = ThemeManager.getThemeState(requireContext())
-        binding.switchDarkTheme.setOnCheckedChangeListener { _, isChecked ->
-            ThemeManager.setThemeState(requireContext(), isChecked)
+        settingsDSStore = SettingsDSStore(requireContext().applicationContext)
+        binding.btnBackToContent.setOnClickListener {
+            findNavController().popBackStack()
         }
+        setupTheme()
         setupFontSize()
         setupPalette()
         setupBackup()
@@ -47,66 +55,135 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
         updateBackupUI()
     }
 
-    private fun setupFontSize() {
-        val currentScale = FontManager.getFontScale(requireContext())
-        binding.seekFontSize.progress = FontManager.getProgressFromScale(currentScale)
-        binding.seekFontSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    val newScale = FontManager.getScaleFromProgress(progress)
-                    FontManager.setFontScale(requireContext(), newScale)
-                    requireActivity().recreate()
+
+    private fun setupTheme() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isDark = settingsDSStore.loadDarkTheme().first()
+            binding.switchDarkTheme.setOnCheckedChangeListener(null)
+            binding.switchDarkTheme.isChecked = isDark
+            binding.switchDarkTheme.setOnCheckedChangeListener { _, isChecked ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    settingsDSStore.saveDarkTheme(isChecked)
+                    ThemeManager.applyTheme(isChecked)
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-    }
-
-    private fun setupPalette() {
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, PaletteManager.getPaletteNames())
-        binding.spinnerPalette.adapter = adapter
-
-        val currentPalette = PaletteManager.getPalette(requireContext())
-        binding.spinnerPalette.setSelection(PaletteManager.getPositionByPaletteKey(currentPalette))
-
-        binding.spinnerPalette.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                val newPaletteKey = PaletteManager.getPaletteKeyByPosition(pos)
-                val actualCurrentPalette = PaletteManager.getPalette(requireContext())
-                if (newPaletteKey != actualCurrentPalette) {
-                    PaletteManager.setPalette(requireContext(), newPaletteKey)
-                    requireActivity().recreate() // Пересоздаем Activity для применения темы
-                }
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
+
+    private fun setupFontSize() {
+        val currentScale = FontManager.getFontScale(requireContext())
+        binding.seekFontSize.progress = FontManager.getProgressFromScale(currentScale)
+        binding.seekFontSize.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if (fromUser) {
+                        val newScale = FontManager.getScaleFromProgress(progress)
+
+                        FontManager.setFontScale(requireContext(), newScale)
+                        requireActivity().recreate()
+                    }
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
+    }
+
+
+    private fun setupPalette() {
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            PaletteManager.getPaletteNames()
+        )
+        binding.spinnerPalette.adapter = adapter
+        viewLifecycleOwner.lifecycleScope.launch {
+            var currentPalette = settingsDSStore.loadPalette().first()
+            val currentPosition = PaletteManager.getPositionByPaletteKey(currentPalette)
+            binding.spinnerPalette.setSelection(currentPosition)
+            binding.spinnerPalette.onItemSelectedListener =
+                object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>?,
+                        view: View?,
+                        position: Int,
+                        id: Long
+                    ) {
+                        val newPalette = PaletteManager.getPaletteKeyByPosition(position)
+                        if (newPalette != currentPalette) {
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                settingsDSStore.savePalette(newPalette)
+                                currentPalette = newPalette
+                                requireActivity().recreate()
+                            }
+                        }
+                    }
+                    override fun onNothingSelected(parent: AdapterView<*>?) {}
+                }
+        }
+    }
+
+
     private fun setupBackup() {
         binding.btnCreateBackup.setOnClickListener {
-            val success = BackupManager.createBackup(requireContext(), PonyRepository.getBackupPonies())
+            val success = BackupManager.createBackup(
+                requireContext(),
+                PonyRepository.getBackupPonies()
+            )
             BackupManager.setUseBackup(requireContext(), false)
-            showBackupSnackbar(success, "Резервная копия создана", "Ошибка создания")
-            if (success) updateBackupUI()
+            showBackupSnackbar(
+                success,
+                "Резервная копия создана",
+                "Ошибка создания"
+            )
+            if (success) {
+                updateBackupUI()
+            }
         }
         binding.btnRestoreBackup.setOnClickListener {
             val restoredList = BackupManager.restoreBackup(requireContext())
             val success = restoredList != null
-            if (success) BackupManager.setUseBackup(requireContext(), true)
-            showBackupSnackbar(success, "Данные успешно восстановлены", "Ошибка восстановления")
+            if (success) {
+                BackupManager.setUseBackup(requireContext(), true)
+            }
+            showBackupSnackbar(
+                success,
+                "Данные успешно восстановлены",
+                "Ошибка восстановления"
+            )
         }
         binding.btnDeleteBackup.setOnClickListener {
             val success = BackupManager.deleteBackup(requireContext())
-            showBackupSnackbar(success, "Резервная копия удалена", "Ошибка удаления")
-            if (success) updateBackupUI()
+            showBackupSnackbar(
+                success,
+                "Резервная копия удалена",
+                "Ошибка удаления"
+            )
+            if (success) {
+                updateBackupUI()
+            }
         }
     }
 
-    private fun showBackupSnackbar(success: Boolean, successMsg: String, errorMsg: String) {
+
+    private fun showBackupSnackbar(
+        success: Boolean,
+        successMsg: String,
+        errorMsg: String
+    ) {
         val message = if (success) successMsg else errorMsg
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+        Snackbar.make(
+            binding.root,
+            message,
+            Snackbar.LENGTH_SHORT
+        ).show()
     }
+
 
     private fun updateBackupUI() {
         val hasBackup = BackupManager.hasBackup(requireContext())
@@ -119,8 +196,14 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
             isEnabled = hasBackup
         }
         binding.tvBackupStatus.apply {
-            text = if (hasBackup) "Резервная копия найдена" else "Резервная копия не найдена"
-            setTextColor(requireContext().getColor(R.color.text_secondary))
+            text = if (hasBackup) {
+                "Резервная копия найдена"
+            } else {
+                "Резервная копия не найдена"
+            }
+            setTextColor(
+                requireContext().getColor(R.color.text_secondary)
+            )
         }
         binding.tvBackupHint.text = if (hasBackup) {
             "Вы можете восстановить данные или удалить старую копию."
@@ -129,26 +212,48 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
         }
     }
 
+
     private fun setupProfilePicture() {
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, ProfilePictureRepository.getProfilePictureNames())
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            ProfilePictureRepository.getProfilePictureNames()
+        )
         binding.spinnerProfilePicture.adapter = adapter
-
-        val currentProfilePicture = userViewModel.currentProfilePictureResId ?: ProfilePictureRepository.getAvailableProfilePictures().first()
-        binding.spinnerProfilePicture.setSelection(ProfilePictureRepository.getPositionByProfilePicture(currentProfilePicture))
-
-        binding.spinnerProfilePicture.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                val selectedProfilePicture = ProfilePictureRepository.getProfilePictureByPosition(pos)
-                val actualCurrentProfilePicture = userViewModel.currentProfilePictureResId ?: ProfilePictureRepository.getAvailableProfilePictures().first()
-
-                if (selectedProfilePicture != actualCurrentProfilePicture) {
-                    userViewModel.currentProfilePictureResId = selectedProfilePicture
-                    Snackbar.make(binding.root, "Аватарка обновлена!", Snackbar.LENGTH_SHORT).show()
+        val currentProfilePicture =
+            userViewModel.currentProfilePictureResId
+                ?: ProfilePictureRepository.getAvailableProfilePictures().first()
+        binding.spinnerProfilePicture.setSelection(
+            ProfilePictureRepository.getPositionByProfilePicture(
+                currentProfilePicture
+            )
+        )
+        binding.spinnerProfilePicture.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    pos: Int,
+                    id: Long
+                ) {
+                    val selectedProfilePicture = ProfilePictureRepository.getProfilePictureByPosition(pos)
+                    val actualCurrentProfilePicture =
+                        userViewModel.currentProfilePictureResId
+                            ?: ProfilePictureRepository.getAvailableProfilePictures().first()
+                    if (selectedProfilePicture != actualCurrentProfilePicture) {
+                        userViewModel.currentProfilePictureResId =
+                            selectedProfilePicture
+                        Snackbar.make(
+                            binding.root,
+                            "Аватарка обновлена!",
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
                 }
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

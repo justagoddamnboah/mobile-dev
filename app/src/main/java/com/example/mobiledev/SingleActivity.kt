@@ -10,7 +10,9 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.databinding.ActivityBinding
 import com.example.mobiledev.prefs.FontManager
 import com.example.mobiledev.prefs.PaletteManager
+import com.example.mobiledev.prefs.SettingsDSStore
 import com.example.mobiledev.prefs.ThemeManager
+import kotlinx.coroutines.flow.first
 
 class SingleActivity : AppCompatActivity() {
 
@@ -24,11 +26,23 @@ class SingleActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ThemeManager.applyTheme(this)
-        val palette = PaletteManager.getPalette(this)
-        setTheme(PaletteManager.getThemeResByPalette(palette))
+        val settingsDSStore = SettingsDSStore(applicationContext)
+        val isDark = kotlinx.coroutines.runBlocking {
+            settingsDSStore.loadDarkTheme().first()
+        }
+        val palette = kotlinx.coroutines.runBlocking {
+            settingsDSStore.loadPalette().first()
+        }
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+            if (isDark) {
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+            } else {
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+            }
+        )
 
         super.onCreate(savedInstanceState)
+        setTheme(PaletteManager.getThemeResByPalette(palette))
 
         binding = ActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
