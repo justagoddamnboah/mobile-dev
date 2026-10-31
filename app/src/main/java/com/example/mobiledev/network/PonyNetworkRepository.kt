@@ -8,6 +8,7 @@ import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.cancellation.CancellationException
 
 @Serializable
 data class PonyApiResponse(
@@ -62,6 +63,8 @@ object PonyNetworkRepository {
             } else {
                 Result.failure(Exception("Ошибка сервера: код ${response.status}"))
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

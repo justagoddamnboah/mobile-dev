@@ -125,6 +125,7 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
 
     private fun loadPonies(isAppend: Boolean) {
         if (isLoading) return
+
         isLoading = true
 
         if (!isAppend) {
@@ -136,27 +137,41 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
             binding.btnLoadMore.text = "Загрузка..."
         }
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            val result = PonyNetworkRepository.getPonies(limit = pageSize, offset = currentPage * pageSize)
+        // Запускаем корутину, привязанную к жизненному циклу View
+        viewLifecycleOwner.lifecycleScope.launch {
 
-            withContext(Dispatchers.Main) {
+            try {
+                // Сетевой запрос выполняется в фоновом потоке
+                val result = withContext(Dispatchers.IO) {
+                    PonyNetworkRepository.getPonies(
+                        limit = pageSize,
+                        offset = currentPage * pageSize
+                    )
+                }
+
                 isLoading = false
+
                 binding.progressBar.visibility = View.GONE
                 binding.btnLoadMore.isEnabled = true
                 binding.btnLoadMore.text = "Загрузить ещё"
 
                 result.onSuccess { ponies ->
+
                     if (ponies.isEmpty()) {
                         hasMoreData = false
+
                         if (!isAppend) {
                             binding.attention.text = "Данные отсутствуют."
                             binding.attention.visibility = View.VISIBLE
                             binding.recyclerPonies.visibility = View.GONE
                         }
+
                         binding.btnLoadMore.visibility = View.GONE
+
                     } else {
                         if (!isAppend) {
-                            binding.attention.text = "Привет, ${args.username}! Знакомься с жителями Эквестрии."
+                            binding.attention.text =
+                                "Привет, ${args.username}! Знакомься с жителями Эквестрии."
                         }
 
                         binding.attention.visibility = View.VISIBLE
@@ -166,7 +181,9 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
                         hasLoadedData = true
 
                         if (recyclerViewState != null && !isAppend) {
-                            binding.recyclerPonies.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                            binding.recyclerPonies.layoutManager
+                                ?.onRestoreInstanceState(recyclerViewState)
+
                             recyclerViewState = null
                         }
 
@@ -178,15 +195,27 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
                             binding.btnLoadMore.visibility = View.VISIBLE
                         }
                     }
-                }.onFailure { exception ->
+                }
+
+                result.onFailure { exception ->
                     hasMoreData = false
-                    binding.attention.text = "Ошибка загрузки данных:\n${exception.message}\nПроверьте подключение к интернету."
+
+                    binding.attention.text =
+                        "Ошибка загрузки данных:\n${exception.message}\nПроверьте подключение к интернету."
+
                     binding.attention.visibility = View.VISIBLE
                     binding.recyclerPonies.visibility = View.GONE
                     binding.btnLoadMore.visibility = View.GONE
 
-                    Snackbar.make(binding.root, "Не удалось загрузить данные", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(
+                        binding.root,
+                        "Не удалось загрузить данные",
+                        Snackbar.LENGTH_LONG
+                    ).show()
                 }
+
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -198,6 +227,7 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
     }
 
     override fun onDestroyView() {
+        isLoading = false
         super.onDestroyView()
         _binding = null
     }

@@ -18,6 +18,7 @@ import com.example.mobiledev.models.PonyRepository
 import com.example.mobiledev.prefs.BackupManager
 import com.example.mobiledev.prefs.FontManager
 import com.example.mobiledev.prefs.PaletteManager
+import com.example.mobiledev.prefs.ProfilePictureManager
 import com.example.mobiledev.prefs.SettingsDSStore
 import com.example.mobiledev.prefs.ThemeManager
 import com.example.mobiledev.viewmodel.UserViewModel
@@ -221,8 +222,7 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
         )
         binding.spinnerProfilePicture.adapter = adapter
         val currentProfilePicture =
-            userViewModel.currentProfilePictureResId
-                ?: ProfilePictureRepository.getAvailableProfilePictures().first()
+            ProfilePictureManager.getProfilePicture(requireContext())
         binding.spinnerProfilePicture.setSelection(
             ProfilePictureRepository.getPositionByProfilePicture(
                 currentProfilePicture
@@ -236,11 +236,15 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
                     pos: Int,
                     id: Long
                 ) {
-                    val selectedProfilePicture = ProfilePictureRepository.getProfilePictureByPosition(pos)
-                    val actualCurrentProfilePicture =
-                        userViewModel.currentProfilePictureResId
-                            ?: ProfilePictureRepository.getAvailableProfilePictures().first()
-                    if (selectedProfilePicture != actualCurrentProfilePicture) {
+                    val selectedProfilePicture =
+                        ProfilePictureRepository.getProfilePictureByPosition(pos)
+                    if (selectedProfilePicture !=
+                        ProfilePictureManager.getProfilePicture(requireContext())
+                    ) {
+                        ProfilePictureManager.saveProfilePicture(
+                            requireContext(),
+                            selectedProfilePicture
+                        )
                         userViewModel.currentProfilePictureResId =
                             selectedProfilePicture
                         Snackbar.make(

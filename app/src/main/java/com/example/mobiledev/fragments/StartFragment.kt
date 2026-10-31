@@ -9,6 +9,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentStartBinding
 import com.example.mobiledev.extensions.BaseFragment
+import com.example.mobiledev.prefs.ProfilePictureManager
 import com.example.mobiledev.viewmodel.UserViewModel
 
 class StartFragment : BaseFragment(R.layout.fragment_start) {
@@ -23,16 +24,13 @@ class StartFragment : BaseFragment(R.layout.fragment_start) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        userViewModel.currentProfilePictureResId = ProfilePictureManager.getProfilePicture(requireContext())
         updateUI()
-
         binding.btnToRegister.setOnClickListener {
             findNavController().navigate(R.id.action_start_to_registration)
         }
-
         binding.btnToContent.setOnClickListener {
             val name = userViewModel.currentUsername ?: "Незнакомец"
-
             val action = StartFragmentDirections.actionStartToContent(name)
             findNavController().navigate(action)
         }
@@ -45,12 +43,10 @@ class StartFragment : BaseFragment(R.layout.fragment_start) {
 
     private fun updateUI() {
         val name = userViewModel.currentUsername
-
         if (name != null) {
             binding.ponyQuote.text = "Привет, $name!"
             binding.btnToRegister.visibility = View.GONE
             binding.userProfilePicture.visibility = View.VISIBLE
-
             val profilePictureResId = userViewModel.currentProfilePictureResId ?: R.drawable.twilight_sparkle
             binding.userProfilePicture.setImageResource(profilePictureResId)
         } else {
