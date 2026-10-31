@@ -65,17 +65,19 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
         showAttention()
 
         if (isAuthorized && !hasLoadedData) {
-            val backupPonies = getCurrentPonies()
+            viewLifecycleOwner.lifecycleScope.launch {
+                val backupPonies = getCurrentPonies()
 
-            if (backupPonies.isNotEmpty()) {
-                ponyAdapter.submitList(backupPonies, isAppend = false)
-                binding.recyclerPonies.visibility = View.VISIBLE
-                binding.btnLoadMore.visibility = View.GONE
+                if (backupPonies.isNotEmpty()) {
+                    ponyAdapter.submitList(backupPonies, isAppend = false)
+                    binding.recyclerPonies.visibility = View.VISIBLE
+                    binding.btnLoadMore.visibility = View.GONE
 
-                hasLoadedData = true
-                hasMoreData = false
-            } else {
-                resetAndLoad()
+                    hasLoadedData = true
+                    hasMoreData = false
+                } else {
+                    resetAndLoad()
+                }
             }
         }
     }
@@ -110,7 +112,7 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
         }
     }
 
-    private fun getCurrentPonies(): List<Pony> {
+    private suspend fun getCurrentPonies(): List<Pony> {
         return if (BackupManager.shouldUseBackup(requireContext())) {
             BackupManager.restoreBackup(requireContext()) ?: emptyList()
         } else {

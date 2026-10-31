@@ -132,41 +132,47 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
 
     private fun setupBackup() {
         binding.btnCreateBackup.setOnClickListener {
-            val success = BackupManager.createBackup(
-                requireContext(),
-                PonyRepository.getBackupPonies()
-            )
-            BackupManager.setUseBackup(requireContext(), false)
-            showBackupSnackbar(
-                success,
-                "Резервная копия создана",
-                "Ошибка создания"
-            )
-            if (success) {
-                updateBackupUI()
+            viewLifecycleOwner.lifecycleScope.launch {
+                val success = BackupManager.createBackup(
+                    requireContext(),
+                    PonyRepository.getBackupPonies()
+                )
+                BackupManager.setUseBackup(requireContext(), false)
+                showBackupSnackbar(
+                    success,
+                    "Резервная копия создана",
+                    "Ошибка создания"
+                )
+                if (success) {
+                    updateBackupUI()
+                }
             }
         }
         binding.btnRestoreBackup.setOnClickListener {
-            val restoredList = BackupManager.restoreBackup(requireContext())
-            val success = restoredList != null
-            if (success) {
-                BackupManager.setUseBackup(requireContext(), true)
+            viewLifecycleOwner.lifecycleScope.launch {
+                val restoredList = BackupManager.restoreBackup(requireContext())
+                val success = restoredList != null
+                if (success) {
+                    BackupManager.setUseBackup(requireContext(), true)
+                }
+                showBackupSnackbar(
+                    success,
+                    "Данные успешно восстановлены",
+                    "Ошибка восстановления"
+                )
             }
-            showBackupSnackbar(
-                success,
-                "Данные успешно восстановлены",
-                "Ошибка восстановления"
-            )
         }
         binding.btnDeleteBackup.setOnClickListener {
-            val success = BackupManager.deleteBackup(requireContext())
-            showBackupSnackbar(
-                success,
-                "Резервная копия удалена",
-                "Ошибка удаления"
-            )
-            if (success) {
-                updateBackupUI()
+            viewLifecycleOwner.lifecycleScope.launch {
+                val success = BackupManager.deleteBackup(requireContext())
+                showBackupSnackbar(
+                    success,
+                    "Резервная копия удалена",
+                    "Ошибка удаления"
+                )
+                if (success) {
+                    updateBackupUI()
+                }
             }
         }
     }
@@ -187,31 +193,33 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
 
 
     private fun updateBackupUI() {
-        val hasBackup = BackupManager.hasBackup(requireContext())
-        binding.btnCreateBackup.visibility =
-            if (hasBackup) View.GONE else View.VISIBLE
-        binding.btnRestoreBackup.apply {
-            visibility = if (hasBackup) View.VISIBLE else View.GONE
-            isEnabled = hasBackup
-        }
-        binding.btnDeleteBackup.apply {
-            visibility = if (hasBackup) View.VISIBLE else View.GONE
-            isEnabled = hasBackup
-        }
-        binding.tvBackupStatus.apply {
-            text = if (hasBackup) {
-                "Резервная копия найдена"
-            } else {
-                "Резервная копия не найдена"
+        viewLifecycleOwner.lifecycleScope.launch {
+            val hasBackup = BackupManager.hasBackup(requireContext())
+            binding.btnCreateBackup.visibility =
+                if (hasBackup) View.GONE else View.VISIBLE
+            binding.btnRestoreBackup.apply {
+                visibility = if (hasBackup) View.VISIBLE else View.GONE
+                isEnabled = hasBackup
             }
-            setTextColor(
-                requireContext().getColor(R.color.text_secondary)
-            )
-        }
-        binding.tvBackupHint.text = if (hasBackup) {
-            "Вы можете восстановить данные или удалить старую копию."
-        } else {
-            "Создайте копию, чтобы сохранить текущий список жителей Эквестрии."
+            binding.btnDeleteBackup.apply {
+                visibility = if (hasBackup) View.VISIBLE else View.GONE
+                isEnabled = hasBackup
+            }
+            binding.tvBackupStatus.apply {
+                text = if (hasBackup) {
+                    "Резервная копия найдена"
+                } else {
+                    "Резервная копия не найдена"
+                }
+                setTextColor(
+                    requireContext().getColor(R.color.text_secondary)
+                )
+            }
+            binding.tvBackupHint.text = if (hasBackup) {
+                "Вы можете восстановить данные или удалить старую копию."
+            } else {
+                "Создайте копию, чтобы сохранить текущий список жителей Эквестрии."
+            }
         }
     }
 
