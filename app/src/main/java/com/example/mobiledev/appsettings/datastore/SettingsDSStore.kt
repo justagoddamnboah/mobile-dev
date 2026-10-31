@@ -1,4 +1,4 @@
-package com.example.mobiledev.prefs
+package com.example.mobiledev.appsettings.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -13,8 +13,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "DS")
 
-class SettingsDSStore(applicationContext: android.content.Context) {
-
+class SettingsDSStore(applicationContext: Context) {
     suspend fun saveDarkTheme(isDark: Boolean) {
         MobileApplication.mobileApplicationContext().dataStore.edit { preferences ->
             preferences[IS_DARK_THEME] = isDark
@@ -34,13 +33,11 @@ class SettingsDSStore(applicationContext: android.content.Context) {
 
     fun loadPalette(): Flow<String> =
         MobileApplication.mobileApplicationContext().dataStore.data.map { preferences ->
-            preferences[PALETTE] ?: DEFAULT_PALETTE
+            preferences[PALETTE] ?: "Розовая"
         }
 
     companion object {
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
         val PALETTE = stringPreferencesKey("palette")
-
-        const val DEFAULT_PALETTE = "Розовая"
     }
 }

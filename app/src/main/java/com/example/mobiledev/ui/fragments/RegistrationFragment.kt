@@ -1,4 +1,4 @@
-package com.example.mobiledev.fragments
+package com.example.mobiledev.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +9,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentRegistrationBinding
 import com.example.mobiledev.extensions.BaseFragment
-import com.example.mobiledev.models.ProfilePictureRepository
+import com.example.mobiledev.models.repositories.ProfilePictureRepository
 import com.example.mobiledev.viewmodel.UserViewModel
 import com.google.android.material.snackbar.Snackbar
 

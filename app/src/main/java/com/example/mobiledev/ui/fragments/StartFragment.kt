@@ -1,4 +1,4 @@
-package com.example.mobiledev.fragments
+package com.example.mobiledev.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +9,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentStartBinding
 import com.example.mobiledev.extensions.BaseFragment
-import com.example.mobiledev.prefs.ProfilePictureManager
+import com.example.mobiledev.appsettings.prefs.ProfilePictureManager
 import com.example.mobiledev.viewmodel.UserViewModel
 
 class StartFragment : BaseFragment(R.layout.fragment_start) {

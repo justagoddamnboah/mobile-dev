@@ -1,4 +1,4 @@
-package com.example.mobiledev.prefs
+package com.example.mobiledev.appsettings.datastore
 
 import com.example.mobiledev.R
 

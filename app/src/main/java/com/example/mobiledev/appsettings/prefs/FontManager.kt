@@ -1,4 +1,4 @@
-package com.example.mobiledev.prefs
+package com.example.mobiledev.appsettings.prefs
 
 import android.content.Context
 import androidx.core.content.edit

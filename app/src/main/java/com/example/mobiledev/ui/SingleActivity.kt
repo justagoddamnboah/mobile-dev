@@ -1,18 +1,19 @@
-package com.example.mobiledev
+package com.example.mobiledev.ui
 
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobiledev.databinding.ActivityBinding
-import com.example.mobiledev.prefs.FontManager
-import com.example.mobiledev.prefs.PaletteManager
-import com.example.mobiledev.prefs.SettingsDSStore
-import com.example.mobiledev.prefs.ThemeManager
+import com.example.mobiledev.appsettings.prefs.FontManager
+import com.example.mobiledev.appsettings.datastore.PaletteManager
+import com.example.mobiledev.appsettings.datastore.SettingsDSStore
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class SingleActivity : AppCompatActivity() {
 
@@ -27,17 +28,17 @@ class SingleActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val settingsDSStore = SettingsDSStore(applicationContext)
-        val isDark = kotlinx.coroutines.runBlocking {
+        val isDark = runBlocking {
             settingsDSStore.loadDarkTheme().first()
         }
-        val palette = kotlinx.coroutines.runBlocking {
+        val palette = runBlocking {
             settingsDSStore.loadPalette().first()
         }
-        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+        AppCompatDelegate.setDefaultNightMode(
             if (isDark) {
-                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+                AppCompatDelegate.MODE_NIGHT_YES
             } else {
-                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+                AppCompatDelegate.MODE_NIGHT_NO
             }
         )
 

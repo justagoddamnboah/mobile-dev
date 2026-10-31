@@ -1,4 +1,4 @@
-package com.example.mobiledev.models
+package com.example.mobiledev.models.repositories
 
 import com.example.mobiledev.network.Pony
 
@@ -14,15 +14,7 @@ object PonyRepository {
         ponies.addAll(newPonies)
     }
 
-    fun getPonies(): List<Pony> {
-        return ponies.toList()
-    }
-
     fun getBackupPonies(): List<Pony> {
         return ponies.toList()
-    }
-
-    fun clearPonies() {
-        ponies.clear()
     }
 }

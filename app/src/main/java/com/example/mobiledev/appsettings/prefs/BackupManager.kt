@@ -1,4 +1,4 @@
-package com.example.mobiledev.prefs
+package com.example.mobiledev.appsettings.prefs
 
 import android.content.ContentUris
 import android.content.ContentValues
@@ -21,20 +21,20 @@ object BackupManager {
     private const val KEY_USE_BACKUP = "use_backup"
     private val PUBLIC_DIR = Environment.DIRECTORY_DOCUMENTS
 
+
     fun setUseBackup(context: Context, use: Boolean) {
         context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit {
             putBoolean(KEY_USE_BACKUP, use)
         }
     }
 
+
     fun shouldUseBackup(context: Context): Boolean {
         return context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             .getBoolean(KEY_USE_BACKUP, false)
     }
 
-    // ---------- публичная директория (Documents) ----------
 
-    // Android 10+ : файл ищем/пишем через MediaStore (разрешения не нужны для своих файлов)
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun findPublicUri(context: Context): Uri? {
         val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
@@ -49,13 +49,14 @@ object BackupManager {
         }
     }
 
-    // Android 9 и ниже : обычный файл в общей папке Documents
+
     @Suppress("DEPRECATION")
     private fun legacyPublicFile(): File {
         val dir = Environment.getExternalStoragePublicDirectory(PUBLIC_DIR)
         dir.mkdirs()
         return File(dir, BACKUP_FILE_NAME)
     }
+
 
     private fun hasPublic(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -64,6 +65,7 @@ object BackupManager {
             legacyPublicFile().exists()
         }
     }
+
 
     private fun writePublic(context: Context, text: String): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -84,6 +86,7 @@ object BackupManager {
         }
     }
 
+
     private fun readPublic(context: Context): String? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val uri = findPublicUri(context) ?: return null
@@ -93,6 +96,7 @@ object BackupManager {
             if (file.exists()) file.readText() else null
         }
     }
+
 
     private fun deletePublic(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -104,7 +108,6 @@ object BackupManager {
         }
     }
 
-    // ---------- операции (все выполняются вне главного потока) ----------
 
     suspend fun hasBackup(context: Context): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -115,7 +118,7 @@ object BackupManager {
         }
     }
 
-    // При создании копия кладётся в ОТКРЫТУЮ директорию (Documents)
+
     suspend fun createBackup(context: Context, ponies: List<Pony>): Boolean =
         withContext(Dispatchers.IO) {
             try {
@@ -142,15 +145,14 @@ object BackupManager {
             }
         }
 
+
     suspend fun restoreBackup(context: Context): List<Pony>? = withContext(Dispatchers.IO) {
         try {
             val jsonString = readPublic(context) ?: return@withContext null
             val jsonArray = JSONArray(jsonString)
             val ponies = mutableListOf<Pony>()
-
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-
                 val kindArray = obj.optJSONArray("kind")
                 val kindList = if (kindArray != null) {
                     (0 until kindArray.length()).map { index ->
@@ -160,7 +162,6 @@ object BackupManager {
                     val oldKind = obj.optString("kind", "")
                     if (oldKind.isNotBlank()) listOf(oldKind) else emptyList()
                 }
-
                 ponies.add(
                     Pony(
                         id = obj.optInt("id", 0),
@@ -179,23 +180,18 @@ object BackupManager {
         }
     }
 
-    // Перед удалением из открытой директории копия незаметно сохраняется
-    // в ЗАКРЫТОЕ хранилище приложения (filesDir)
+
     suspend fun deleteBackup(context: Context): Boolean = withContext(Dispatchers.IO) {
         try {
             val text = readPublic(context)
             if (text != null) {
                 File(context.filesDir, BACKUP_FILE_NAME).writeText(text)
             }
-
             val deleted = deletePublic(context)
-
             if (deleted) {
                 setUseBackup(context, false)
             }
-
             deleted
-
         } catch (e: Exception) {
             e.printStackTrace()
             false

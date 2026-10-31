@@ -1,4 +1,4 @@
-package com.example.mobiledev.models
+package com.example.mobiledev.models.repositories
 
 import com.example.mobiledev.R
 

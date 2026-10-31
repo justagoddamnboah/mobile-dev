@@ -1,4 +1,4 @@
-package com.example.mobiledev.fragments
+package com.example.mobiledev.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,14 +13,14 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentSettingsBinding
 import com.example.mobiledev.extensions.BaseFragment
-import com.example.mobiledev.models.ProfilePictureRepository
-import com.example.mobiledev.models.PonyRepository
-import com.example.mobiledev.prefs.BackupManager
-import com.example.mobiledev.prefs.FontManager
-import com.example.mobiledev.prefs.PaletteManager
-import com.example.mobiledev.prefs.ProfilePictureManager
-import com.example.mobiledev.prefs.SettingsDSStore
-import com.example.mobiledev.prefs.ThemeManager
+import com.example.mobiledev.models.repositories.ProfilePictureRepository
+import com.example.mobiledev.models.repositories.PonyRepository
+import com.example.mobiledev.appsettings.prefs.BackupManager
+import com.example.mobiledev.appsettings.prefs.FontManager
+import com.example.mobiledev.appsettings.datastore.PaletteManager
+import com.example.mobiledev.appsettings.prefs.ProfilePictureManager
+import com.example.mobiledev.appsettings.datastore.SettingsDSStore
+import com.example.mobiledev.appsettings.datastore.ThemeManager
 import com.example.mobiledev.viewmodel.UserViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.first
