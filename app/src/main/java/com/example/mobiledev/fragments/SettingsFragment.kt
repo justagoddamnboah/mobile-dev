@@ -188,6 +188,8 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
 
     private fun updateBackupUI() {
         val hasBackup = BackupManager.hasBackup(requireContext())
+        binding.btnCreateBackup.visibility =
+            if (hasBackup) View.GONE else View.VISIBLE
         binding.btnRestoreBackup.apply {
             visibility = if (hasBackup) View.VISIBLE else View.GONE
             isEnabled = hasBackup

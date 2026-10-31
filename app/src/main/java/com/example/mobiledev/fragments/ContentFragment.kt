@@ -66,11 +66,14 @@ class ContentFragment : BaseFragment(R.layout.fragment_content) {
 
         if (isAuthorized && !hasLoadedData) {
             val backupPonies = getCurrentPonies()
+
             if (backupPonies.isNotEmpty()) {
                 ponyAdapter.submitList(backupPonies, isAppend = false)
                 binding.recyclerPonies.visibility = View.VISIBLE
                 binding.btnLoadMore.visibility = View.GONE
+
                 hasLoadedData = true
+                hasMoreData = false
             } else {
                 resetAndLoad()
             }
