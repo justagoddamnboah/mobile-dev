@@ -47,7 +47,7 @@ class StartFragment : BaseFragment(R.layout.fragment_start) {
             binding.ponyQuote.text = "Привет, $name!"
             binding.btnToRegister.visibility = View.GONE
             binding.userProfilePicture.visibility = View.VISIBLE
-            val profilePictureResId = userViewModel.currentProfilePictureResId ?: R.drawable.twilight_sparkle
+            val profilePictureResId = userViewModel.currentProfilePictureResId ?: R.drawable.profile_twilight_sparkle
             binding.userProfilePicture.setImageResource(profilePictureResId)
         } else {
             binding.ponyQuote.text = "Добро пожаловать в Эквестрию! Здесь ты можешь познакомиться со всеми жителями!"
