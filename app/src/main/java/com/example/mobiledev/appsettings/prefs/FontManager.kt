@@ -7,10 +7,10 @@ object FontManager {
     private const val PREFS_NAME = "AppPrefs"
     private const val KEY_FONT_SCALE = "font_scale"
 
-    private const val MIN_SCALE = 0.8f
+    private const val MIN_SCALE = 1f
     private const val MAX_SCALE = 1.5f
     private const val SCALE_STEP = 0.1f
-    const val MAX_PROGRESS = 7
+    const val MAX_PROGRESS = 5
 
     fun getFontScale(context: Context): Float {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
