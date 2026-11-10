@@ -5,215 +5,222 @@ import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mobiledev.R
-import com.example.mobiledev.ui.adapter.PonyAdapter
+import com.example.mobiledev.database.PonyDatabaseRepository
 import com.example.mobiledev.databinding.FragmentContentBinding
 import com.example.mobiledev.extensions.BaseFragment
 import com.example.mobiledev.models.repositories.PonyRepository
 import com.example.mobiledev.network.Pony
 import com.example.mobiledev.network.PonyNetworkRepository
-import com.example.mobiledev.appsettings.prefs.BackupManager
+import com.example.mobiledev.ui.adapter.PonyAdapter
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ContentFragment : BaseFragment(R.layout.fragment_content) {
+
     private var _binding: FragmentContentBinding? = null
     private val binding get() = _binding!!
 
     private val args: ContentFragmentArgs by navArgs()
     private val ponyAdapter = PonyAdapter()
+    private lateinit var databaseRepository: PonyDatabaseRepository
 
-    private var currentPage = 0
-    private var isLoading = false
-    private var hasMoreData = true
-    private var hasLoadedData = false
     private val pageSize = 25
+    private var nextOffset = 0
+    private var isLoading = false
+    private var isLoadingMore = false
+    private var hasMoreData = true
+    private var isInitialized = false
+    private var isAuthorized = false
+    private var errorText: String? = null
+    private var cachedPonies: List<Pony> = emptyList()
     private var recyclerViewState: Parcelable? = null
 
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentContentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        databaseRepository = PonyDatabaseRepository(requireContext().applicationContext)
+        isAuthorized = args.username.isNotBlank() && args.username != "Незнакомец"
+        isInitialized = false
+        isLoading = false
+        isLoadingMore = false
+        cachedPonies = emptyList()
+        errorText = null
+
         binding.recyclerPonies.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerPonies.adapter = ponyAdapter
+
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
-        val isAuthorized = args.username != "Незнакомец" && args.username.isNotEmpty()
-        binding.btnSettings.visibility = if (isAuthorized) View.VISIBLE else View.GONE
         binding.btnSettings.setOnClickListener {
             findNavController().navigate(R.id.action_content_to_settings)
         }
-        binding.btnLoadMore.setOnClickListener {
-            if (!isLoading && hasMoreData) {
-                currentPage++
-                loadPonies(isAppend = true)
-            }
-        }
-        showAttention()
-        if (isAuthorized && !hasLoadedData) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                val backupPonies = getCurrentPonies()
-                if (backupPonies.isNotEmpty()) {
-                    ponyAdapter.submitList(backupPonies, isAppend = false)
-                    binding.recyclerPonies.visibility = View.VISIBLE
-                    binding.btnLoadMore.visibility = View.GONE
-                    hasLoadedData = true
-                    hasMoreData = false
-                } else {
-                    resetAndLoad()
+        binding.btnRefresh.setOnClickListener { loadPage(refresh = true) }
+        binding.btnLoadMore.setOnClickListener { loadPage(refresh = false) }
+
+        binding.btnSettings.visibility = if (isAuthorized) View.VISIBLE else View.GONE
+        binding.btnRefresh.visibility = if (isAuthorized) View.VISIBLE else View.GONE
+        renderContent()
+
+        if (!isAuthorized) return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                databaseRepository.poniesFlow.collect { ponies ->
+                    cachedPonies = ponies
+                    ponyAdapter.submitList(ponies)
+
+                    PonyRepository.setPonies(ponies)
+                    renderContent()
                 }
             }
         }
-    }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            val savedPonies = databaseRepository.getCachedPonies()
+            cachedPonies = savedPonies
+            ponyAdapter.submitList(savedPonies)
+            nextOffset = savedPonies.size
+            hasMoreData = true
+            isInitialized = true
+            restoreScrollPosition()
+            renderContent()
 
-    override fun onResume() {
-        super.onResume()
-        val isAuthorized = args.username != "Незнакомец" && args.username.isNotEmpty()
-        binding.btnSettings.visibility = if (isAuthorized) View.VISIBLE else View.GONE
-        if (hasLoadedData) {
-            showAttention()
-            if (ponyAdapter.itemCount > 0) {
-                binding.recyclerPonies.visibility = View.VISIBLE
-                binding.attention.visibility = View.VISIBLE
-                binding.btnLoadMore.visibility = if (hasMoreData) View.VISIBLE else View.GONE
+            if (savedPonies.isEmpty()) {
+                loadPage(refresh = true)
             }
         }
     }
 
+    private fun loadPage(refresh: Boolean) {
+        if (!isAuthorized || !isInitialized || isLoading) return
+        if (!refresh && !hasMoreData) return
 
-    private fun showAttention() {
-        val name = args.username
-        if (name == "Незнакомец" || name.isNullOrEmpty()) {
-            binding.attention.text = "Пони не готовы с вами знакомиться, так как они не знают вашего имени. Вы что, оборотень?"
-            binding.attention.visibility = View.VISIBLE
-            binding.recyclerPonies.visibility = View.GONE
-            binding.btnLoadMore.visibility = View.GONE
-            binding.progressBar.visibility = View.GONE
-        } else {
-            binding.attention.text = "Привет, $name! Знакомься с жителями Эквестрии."
-            binding.attention.visibility = View.VISIBLE
-        }
-    }
-
-
-    private suspend fun getCurrentPonies(): List<Pony> {
-        return if (BackupManager.shouldUseBackup(requireContext())) {
-            BackupManager.restoreBackup(requireContext()) ?: emptyList()
-        } else {
-            emptyList()
-        }
-    }
-
-
-    private fun resetAndLoad() {
-        currentPage = 0
-        hasMoreData = true
-        isLoading = false
-        hasLoadedData = false
-        ponyAdapter.submitList(emptyList(), isAppend = false)
-        loadPonies(isAppend = false)
-    }
-
-
-    private fun loadPonies(isAppend: Boolean) {
-        if (isLoading) return
+        val requestedOffset = if (refresh) 0 else nextOffset
         isLoading = true
-        if (!isAppend) {
-            binding.progressBar.visibility = View.VISIBLE
-            binding.recyclerPonies.visibility = View.GONE
-            binding.btnLoadMore.visibility = View.GONE
-        } else {
-            binding.btnLoadMore.isEnabled = false
-            binding.btnLoadMore.text = "Загрузка..."
-        }
+        isLoadingMore = !refresh
+        errorText = null
+        renderContent()
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) {
                     PonyNetworkRepository.getPonies(
                         limit = pageSize,
-                        offset = currentPage * pageSize
+                        offset = requestedOffset
                     )
                 }
-                isLoading = false
-                binding.progressBar.visibility = View.GONE
-                binding.btnLoadMore.isEnabled = true
-                binding.btnLoadMore.text = "Загрузить ещё"
-                result.onSuccess { ponies ->
-                    if (ponies.isEmpty()) {
-                        hasMoreData = false
-                        if (!isAppend) {
-                            binding.attention.text = "Данные отсутствуют."
-                            binding.attention.visibility = View.VISIBLE
-                            binding.recyclerPonies.visibility = View.GONE
-                        }
-                        binding.btnLoadMore.visibility = View.GONE
-                    } else {
-                        if (!isAppend) {
-                            binding.attention.text =
-                                "Привет, ${args.username}! Знакомься с жителями Эквестрии."
-                        }
-                        binding.attention.visibility = View.VISIBLE
-                        binding.recyclerPonies.visibility = View.VISIBLE
-                        if (isAppend) {
-                            PonyRepository.addPonies(ponies)
+
+                result.fold(
+                    onSuccess = { ponies ->
+                        if (refresh) {
+                            databaseRepository.replacePonies(ponies)
+                            nextOffset = ponies.size
                         } else {
-                            PonyRepository.setPonies(ponies)
+                            databaseRepository.savePonies(ponies)
+                            nextOffset = requestedOffset + ponies.size
                         }
-                        ponyAdapter.submitList(ponies, isAppend = isAppend)
-                        hasLoadedData = true
-                        if (recyclerViewState != null && !isAppend) {
-                            binding.recyclerPonies.layoutManager
-                                ?.onRestoreInstanceState(recyclerViewState)
-                            recyclerViewState = null
+                        hasMoreData = ponies.size == pageSize
+                        errorText = null
+
+                        if (ponies.isEmpty() && !refresh) {
+                            showMessage("Больше персонажей нет")
                         }
-                        if (ponies.size < pageSize) {
-                            hasMoreData = false
-                            binding.btnLoadMore.visibility = View.GONE
-                        } else {
-                            hasMoreData = true
-                            binding.btnLoadMore.visibility = View.VISIBLE
-                        }
+                    },
+                    onFailure = { exception ->
+                        errorText = "Ошибка загрузки: ${exception.message ?: "нет подключения"}"
+                        showMessage("Не удалось загрузить данные. Проверьте интернет")
                     }
-                }
-                result.onFailure { exception ->
-                    hasMoreData = false
-                    binding.attention.text = "Ошибка загрузки данных:\n${exception.message}\nПроверьте подключение к интернету."
-                    binding.attention.visibility = View.VISIBLE
-                    binding.recyclerPonies.visibility = View.GONE
-                    binding.btnLoadMore.visibility = View.GONE
-                    Snackbar.make(
-                        binding.root,
-                        "Не удалось загрузить данные",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                }
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                errorText = "Ошибка сохранения: ${e.message ?: "неизвестная ошибка"}"
+                showMessage("Не удалось сохранить данные")
             } finally {
                 isLoading = false
+                isLoadingMore = false
+                if (_binding != null) renderContent()
             }
         }
     }
 
+    private fun renderContent() {
+        val ui = _binding ?: return
 
-    override fun onPause() {
-        super.onPause()
-        val layoutManager = binding.recyclerPonies.layoutManager as? LinearLayoutManager
-        recyclerViewState = layoutManager?.onSaveInstanceState()
+        if (!isAuthorized) {
+            ui.attention.text =
+                "Пони не готовы с вами знакомиться, так как они не знают вашего имени. Вы что, оборотень?"
+            ui.attention.visibility = View.VISIBLE
+            ui.recyclerPonies.visibility = View.GONE
+            ui.progressBar.visibility = View.GONE
+            ui.btnLoadMore.visibility = View.GONE
+            ui.btnRefresh.visibility = View.GONE
+            return
+        }
+
+        ui.attention.text = when {
+            cachedPonies.isNotEmpty() ->
+                "Привет, ${args.username}! Знакомься с жителями Эквестрии."
+            !isInitialized || isLoading -> "Загружаем жителей Эквестрии..."
+            errorText != null -> "$errorText\nПроверьте подключение к интернету."
+            else -> "Данные отсутствуют. Нажмите «Обновить»."
+        }
+        ui.attention.visibility = View.VISIBLE
+        ui.recyclerPonies.visibility =
+            if (cachedPonies.isNotEmpty()) View.VISIBLE else View.GONE
+        ui.progressBar.visibility =
+            if (isLoading && cachedPonies.isEmpty()) View.VISIBLE else View.GONE
+
+        ui.btnRefresh.isEnabled = isInitialized && !isLoading
+        ui.btnLoadMore.visibility =
+            if (isInitialized && cachedPonies.isNotEmpty() && hasMoreData) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        ui.btnLoadMore.isEnabled = !isLoading
+        ui.btnLoadMore.text = if (isLoadingMore) "Загрузка..." else "Загрузить ещё"
     }
 
+    private fun restoreScrollPosition() {
+        recyclerViewState?.let { savedState ->
+            binding.recyclerPonies.layoutManager?.onRestoreInstanceState(savedState)
+            recyclerViewState = null
+        }
+    }
+
+    private fun showMessage(text: String) {
+        _binding?.let { Snackbar.make(it.root, text, Snackbar.LENGTH_LONG).show() }
+    }
+
+    override fun onPause() {
+        if (_binding != null) {
+            recyclerViewState =
+                binding.recyclerPonies.layoutManager?.onSaveInstanceState()
+        }
+        super.onPause()
+    }
 
     override fun onDestroyView() {
-        isLoading = false
+        binding.recyclerPonies.adapter = null
         super.onDestroyView()
         _binding = null
     }

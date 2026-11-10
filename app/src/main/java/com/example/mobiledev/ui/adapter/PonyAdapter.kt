@@ -31,8 +31,12 @@ class PonyAdapter : RecyclerView.Adapter<PonyAdapter.PonyViewHolder>() {
             binding.ponyName.text = pony.name
             binding.ponyKind.text =
                 "Вид: ${pony.kind.joinToString(", ").ifBlank { "Неизвестно" }}"
-            binding.ponySex.text =
-                "Пол: ${pony.sex ?: "Неизвестно"}"
+            val sexRu = when (pony.sex?.lowercase()) {
+                "male" -> "Мужской"
+                "female" -> "Женский"
+                else -> "Неизвестно"
+            }
+            binding.ponySex.text = "Пол: $sexRu"
             binding.ponyResidence.text =
                 "Место проживания: ${pony.residence ?: "Неизвестно"}"
             if (pony.imageUrl.isNotEmpty()) {

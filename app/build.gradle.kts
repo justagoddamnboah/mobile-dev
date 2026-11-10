@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     id("androidx.navigation.safeargs.kotlin") version "2.10.2"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
+    id("com.google.devtools.ksp") version "2.3.10"
 }
 
 android {
@@ -37,6 +38,12 @@ android {
 }
 
 dependencies {
+    val roomVersion = "2.8.5"
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
+
     implementation("io.ktor:ktor-client-core:2.3.7")
     implementation("io.ktor:ktor-client-cio:2.3.7")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
@@ -44,6 +51,7 @@ dependencies {
 
     implementation("io.coil-kt:coil:2.5.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation(libs.androidx.core.animation)
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation(libs.androidx.activity.ktx)
