@@ -14,7 +14,8 @@ import com.example.mobiledev.R
 import com.example.mobiledev.databinding.FragmentSettingsBinding
 import com.example.mobiledev.extensions.BaseFragment
 import com.example.mobiledev.models.repositories.ProfilePictureRepository
-import com.example.mobiledev.database.PonyDatabaseRepository
+import com.example.mobiledev.storage.FileManager
+import com.example.mobiledev.storage.sqlite.SQLiteManager
 import com.example.mobiledev.appsettings.prefs.BackupManager
 import com.example.mobiledev.appsettings.prefs.FontManager
 import com.example.mobiledev.appsettings.datastore.PaletteManager
@@ -131,23 +132,19 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
 
 
     private fun setupBackup() {
-        val databaseRepository =
-            PonyDatabaseRepository(requireContext().applicationContext)
+        val fileManager = FileManager()
+        val storage = SQLiteManager()
 
         binding.btnCreateBackup.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 val success = try {
-                    val ponies = databaseRepository.getCachedPonies()
-                    BackupManager.createBackup(requireContext(), ponies)
+                    fileManager.save(storage.load().first())
+                    true
                 } catch (e: Exception) {
                     false
                 }
                 if (success) BackupManager.setUseBackup(requireContext(), false)
-                showBackupSnackbar(
-                    success,
-                    "Резервная копия создана",
-                    "Ошибка создания"
-                )
+                showBackupSnackbar(success, "Резервная копия создана", "Ошибка создания")
                 if (success) updateBackupUI()
             }
         }
@@ -155,33 +152,20 @@ class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
         binding.btnRestoreBackup.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 val success = try {
-                    val restoredPonies = BackupManager.restoreBackup(requireContext())
-                    if (restoredPonies != null) {
-                        databaseRepository.replacePonies(restoredPonies)
-                        BackupManager.setUseBackup(requireContext(), false)
-                        true
-                    } else {
-                        false
-                    }
+                    storage.save(fileManager.load().first())
+                    BackupManager.setUseBackup(requireContext(), false)
+                    true
                 } catch (e: Exception) {
                     false
                 }
-                showBackupSnackbar(
-                    success,
-                    "Данные успешно восстановлены",
-                    "Ошибка восстановления"
-                )
+                showBackupSnackbar(success, "Данные успешно восстановлены", "Ошибка восстановления")
             }
         }
 
         binding.btnDeleteBackup.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 val success = BackupManager.deleteBackup(requireContext())
-                showBackupSnackbar(
-                    success,
-                    "Резервная копия удалена",
-                    "Ошибка удаления"
-                )
+                showBackupSnackbar(success, "Резервная копия удалена", "Ошибка удаления")
                 if (success) updateBackupUI()
             }
         }

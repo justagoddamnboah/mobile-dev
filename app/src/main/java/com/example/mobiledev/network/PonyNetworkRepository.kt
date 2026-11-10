@@ -1,5 +1,7 @@
 package com.example.mobiledev.network
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -26,8 +28,9 @@ data class RawPonyData(
     val image: List<String> = emptyList()
 )
 
+@Entity(tableName = "ponies")
 data class Pony(
-    val id: Int,
+    @PrimaryKey val id: Int,
     val name: String,
     val sex: String?,
     val residence: String?,

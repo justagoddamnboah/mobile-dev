@@ -7,35 +7,30 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.example.mobiledev.network.Pony
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PonyDao {
 
-    @Query("SELECT * FROM ponies ORDER BY id ASC")
-    fun observePonies(): Flow<List<PonyEntity>>
-
-    @Query("SELECT * FROM ponies ORDER BY id ASC")
-    suspend fun getPonies(): List<PonyEntity>
-
-    @Query("SELECT COUNT(*) FROM ponies")
-    suspend fun countPonies(): Int
+    @Query("SELECT * FROM ponies ORDER BY id")
+    fun getAllPonies(): Flow<List<Pony>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPonies(ponies: List<PonyEntity>)
+    suspend fun insertAll(items: List<Pony>)
 
     @Update
-    suspend fun updatePony(pony: PonyEntity)
+    suspend fun update(pony: Pony)
 
     @Delete
-    suspend fun deletePony(pony: PonyEntity)
+    suspend fun delete(pony: Pony)
 
     @Query("DELETE FROM ponies")
-    suspend fun clearPonies()
+    suspend fun clear()
 
     @Transaction
-    suspend fun replacePonies(ponies: List<PonyEntity>) {
-        clearPonies()
-        insertPonies(ponies)
+    suspend fun replaceAll(items: List<Pony>) {
+        clear()
+        insertAll(items)
     }
 }
